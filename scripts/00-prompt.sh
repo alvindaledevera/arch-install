@@ -4,9 +4,13 @@ echo "=== ARCH LINUX INSTALLER ==="
 lsblk
 echo
 
-read -rp "Disk (e.g. /dev/nvme0n1): " DISK
-read -rp "EFI partition (e.g. /dev/nvme0n1p1): " EFI_PART
+read -rp "Disk (e.g. nvme0n1 or vda or sda): " DISK
+read -rp "EFI partition (e.g. nvme0n1p1 or vda1 or sda1): " EFI_PART
 read -rp "Arch partition (WILL BE ERASED): " ARCH_PART
+
+DISK="/dev/$DISK"
+EFI_PART="/dev/$EFI_PART"
+ARCH_PART="/dev/$ARCH_PART"
 
 read -rp "Hostname: " HOSTNAME
 read -rp "Username: " USERNAME
