@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
 
+# Check devices exist
 for p in "$EFI_PART" "$ARCH_PART"; do
-  [[ -b "$p" ]] || { echo "❌ $p not found"; exit 1; }
+    [[ -b "$p" ]] || { echo "❌ $p not found"; exit 1; }
 done
 
+# Check if arch partition is mounted
 if mount | grep -q "$ARCH_PART"; then
-  echo "❌ $ARCH_PART is mounted"
-  exit 1
+    echo "❌ $ARCH_PART is mounted. Please unmount first."
+    exit 1
 fi
