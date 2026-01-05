@@ -1,0 +1,6 @@
+DISK=/dev/nvme0n1
+EFI_PART=/dev/nvme0n1p1
+ARCH_PART=/dev/nvme0n1p2
+HOSTNAME=archlinux
+USERNAME=user
+TIMEZONE=Asia/Manila
