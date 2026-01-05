@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -e
 
+# Clear any leftover mounts
+umount /tmp 2>/dev/null || true
+umount /mnt/tmp 2>/dev/null || true
+
 # VM / ISO safe writable tmp
 mkdir -p /mnt/tmp
 mount -t tmpfs tmpfs /mnt/tmp
