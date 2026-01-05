@@ -22,5 +22,9 @@ echo
 echo "⚠️  CONFIRMATION"
 echo "EFI  : $EFI_PART (KEEP)"
 echo "ARCH : $ARCH_PART (ERASE)"
-read -rp "Type YES to continue: " CONFIRM
-[[ "$CONFIRM" == "YES" ]] || exit 1
+#read -rp "Type YES to continue: " CONFIRM
+#[[ "$CONFIRM" == "YES" ]] || exit 1
+echo
+lsblk "$DISK"
+read -rp "Final confirm (YES): " FINAL
+[[ "$FINAL" == "YES" ]] || exit 1
