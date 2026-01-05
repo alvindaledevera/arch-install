@@ -1,10 +1,14 @@
 #!/usr/bin/env bash
 set -e
 
-# Unmount / clean
+# -----------------------------
+# Mount LUKS+Btrfs subvolumes + EFI
+# -----------------------------
+
+# Unmount / clean any previous mounts
 umount -R /mnt 2>/dev/null || true
 
-# Ensure cryptroot is open
+# Open LUKS mapping (ignore if already open)
 cryptsetup open "$ARCH_PART" cryptroot 2>/dev/null || true
 
 # Mount subvolumes
@@ -13,9 +17,5 @@ mkdir -p /mnt/home /mnt/.snapshots /mnt/boot
 mount -o noatime,compress=zstd,subvol=@home /dev/mapper/cryptroot /mnt/home
 mount -o noatime,compress=zstd,subvol=@snapshots /dev/mapper/cryptroot /mnt/.snapshots
 
-# Mount EFI
+# Mount EFI partition
 mount "$EFI_PART" /mnt/boot
-
-# Bind /tmp for VM safe pacstrap
-mkdir -p /mnt/tmp
-mount --bind /mnt/tmp /tmp
