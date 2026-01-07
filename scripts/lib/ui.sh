@@ -8,5 +8,5 @@ print_stage() {
   echo
 
   # Auto-pause for 3 seconds
-  sleep 3
+  sleep 2
 }
