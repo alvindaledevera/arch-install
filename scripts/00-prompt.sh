@@ -12,7 +12,7 @@ read -rp "EFI partition (e.g. nvme0n1p1 or vda1 sda1): " EFI_PART
 read -rp "Arch partition (WILL BE ERASED): " ARCH_PART
 read -rp "Hostname: " HOSTNAME
 read -rp "Username: " USERNAME
-read -rp "Timezone [$TIMEZONE]: " TZ_INPUT
+read -rp "Timezone [Detected: $TIMEZONE]: " TZ_INPUT
 TIMEZONE="${TZ_INPUT:-$TIMEZONE}"
 
 # Prefix /dev/ if missing
