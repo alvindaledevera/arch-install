@@ -48,3 +48,4 @@ echo
 
 read -rp "Type YES to continue: " CONFIRM
 [[ "$CONFIRM" == "YES" ]] || exit 1
+cd
