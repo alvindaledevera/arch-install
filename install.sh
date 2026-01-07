@@ -7,6 +7,7 @@ echo "=== ARCH LINUX INSTALLER ==="
 
 # Make all installer scripts executable (normal + chroot)
 chmod +x "$SCRIPT_DIR"/scripts/*.sh
+chmod +x "$SCRIPT_DIR"/scripts/lib/*.sh
 chmod +x "$SCRIPT_DIR"/scripts/chroot/*.sh
 
 # Source installer scripts
