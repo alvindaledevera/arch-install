@@ -4,15 +4,22 @@ set -e
 REPO_DIR="arch-install"
 REPO_URL="https://github.com/alvindaledevera/$REPO_DIR.git"
 
-pacman -Sy --noconfirm git
+# Ensure git is installed
+pacman -Sy --noconfirm archlinux-keyring git
 
+# Clone repo if it doesn't exist
+if [ ! -d "$REPO_DIR" ]; then
+    git clone "$REPO_URL"
+else
+    echo "Repository already exists, pulling latest changes..."
+    cd "$REPO_DIR"
+    git pull origin main
+fi
 
-# Clone installer repo
-  git clone "$REPO_URL"
-  cd "$REPO_DIR"
+cd "$REPO_DIR"
 
-  # Ensure executable
-  chmod +x install.sh
+# Ensure install.sh is executable
+chmod +x install.sh
 
-  # Re-run installer from repo
-  exec ./install.sh
+# Run installer
+exec ./install.sh
