@@ -1,21 +1,29 @@
 #!/usr/bin/env bash
 set -e
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+# Repo root (single source of truth)
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+export ROOT_DIR
+
+# Load UI helpers once
+source "$ROOT_DIR/scripts/lib/ui.sh"
 
 echo "=== ARCH LINUX INSTALLER ==="
 
-# Make all installer scripts executable (normal + chroot)
-chmod +x "$SCRIPT_DIR"/scripts/*.sh
-chmod +x "$SCRIPT_DIR"/scripts/lib/*.sh
-chmod +x "$SCRIPT_DIR"/scripts/chroot/*.sh
+chmod +x "$ROOT_DIR"/scripts/*.sh
+chmod +x "$ROOT_DIR"/scripts/chroot/*.sh
 
-# Source installer scripts
-source "$SCRIPT_DIR"/scripts/00-prompt.sh
-source "$SCRIPT_DIR"/scripts/01-checks.sh
-source "$SCRIPT_DIR"/scripts/10-luks-btrfs.sh
-source "$SCRIPT_DIR"/scripts/20-mount.sh
-source "$SCRIPT_DIR"/scripts/30-base.sh
-source "$SCRIPT_DIR"/scripts/40-chroot.sh
+# Wrapper to auto-print stage
+run_stage() {
+  print_stage "$1"
+  source "$1"
+}
+
+run_stage "$ROOT_DIR/scripts/00-prompt.sh"
+run_stage "$ROOT_DIR/scripts/01-checks.sh"
+run_stage "$ROOT_DIR/scripts/10-luks-btrfs.sh"
+run_stage "$ROOT_DIR/scripts/20-mount.sh"
+run_stage "$ROOT_DIR/scripts/30-base.sh"
+run_stage "$ROOT_DIR/scripts/40-chroot.sh"
 
 echo "✅ Installation finished!"

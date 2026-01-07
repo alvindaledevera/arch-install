@@ -1,13 +1,6 @@
 #!/usr/bin/env bash
 set -e
 
-# -----------------------------
-# UI / STAGE HEADER
-# -----------------------------
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-source "$SCRIPT_DIR/lib/ui.sh"
-print_stage "$0"
-
 echo "=== ARCH LINUX INSTALLER ==="
 lsblk
 echo
@@ -48,4 +41,3 @@ echo
 
 read -rp "Type YES to continue: " CONFIRM
 [[ "$CONFIRM" == "YES" ]] || exit 1
-cd
