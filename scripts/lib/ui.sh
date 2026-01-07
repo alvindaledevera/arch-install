@@ -7,6 +7,6 @@ print_stage() {
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
   echo
 
-  # Auto-pause for 1 second
-  sleep 1
+  # Auto-pause for 2 second
+  sleep 2
 }
