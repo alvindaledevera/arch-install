@@ -6,7 +6,7 @@ echo
 
 # Auto-detect timezone from public IP
 time_zone="$(curl --fail -s https://ipapi.co/timezone || true)"
-TIMEZONE="${time_zone:-Asia/Manila}"
+TIMEZONE="${time_zone}"
 
 read -rp "EFI partition (e.g. nvme0n1p1 or vda1 sda1): " EFI_PART
 read -rp "Arch partition (WILL BE ERASED): " ARCH_PART
