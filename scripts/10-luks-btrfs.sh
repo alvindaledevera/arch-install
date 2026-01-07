@@ -14,7 +14,7 @@ umount -R /mnt 2>/dev/null || true
 cryptsetup close cryptroot 2>/dev/null || true
 
 # Format LUKS and open
-cryptsetup luksFormat "$ARCH_PART" --batch-mode
+cryptsetup luksFormat "$ARCH_PART"
 cryptsetup open "$ARCH_PART" cryptroot
 
 # Format Btrfs filesystem
