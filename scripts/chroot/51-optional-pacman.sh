@@ -4,6 +4,7 @@ set -e
 echo "⏱ Installing optional pacman packages..."
 
 PACMAN_PKGS=(
+    git
     nano
     htop
     code
