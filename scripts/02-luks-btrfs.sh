@@ -25,7 +25,7 @@ format_luks
 
 # Open LUKS
 echo "🔒 Opening LUKS on $ARCH_PART"
-cryptsetup open "$ARCH_PART" cryptroot
+cryptsetup luksOpen "$ARCH_PART" cryptroot
 
 # Format Btrfs filesystem
 echo "✨ Creating Btrfs filesystem"
