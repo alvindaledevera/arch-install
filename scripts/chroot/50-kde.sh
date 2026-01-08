@@ -9,14 +9,11 @@ set -e
 echo "⏱ Installing KDE Plasma Desktop and SDDM..."
 
 # Install KDE Plasma, SDDM (display manager), and useful apps
-pacman -Sy --noconfirm \
-    plasma plasma-wayland-session kde-applications sddm sddm-kcm
+pacman -Sy --noconfirm plasma kde-applications sddm sddm-kcm
 
 # Enable SDDM display manager
 systemctl enable sddm
 
-# Optional: set default target to graphical
-systemctl set-default graphical.target
 
 # Set ownership for user home if missing
 if [ -d "/home/$USERNAME" ]; then
