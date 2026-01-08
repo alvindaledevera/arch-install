@@ -5,12 +5,10 @@ set -e
 systemctl enable systemd-networkd
 systemctl enable systemd-resolved
 
-# Only create symlink if it doesn't exist or points somewhere else
-if [ "$(readlink -f /etc/resolv.conf)" != "/run/systemd/resolve/stub-resolv.conf" ]; then
-    ln -sf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
-fi
+# Create symlink for resolv.conf (suppress harmless warning)
+ln -sf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf 2>/dev/null
 
-# Create basic DHCP config for wired interfaces
+# Basic DHCP config for wired interfaces
 cat <<EOF > /etc/systemd/network/20-wired.network
 [Match]
 Name=en*
