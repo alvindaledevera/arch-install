@@ -3,7 +3,7 @@ set -e
 
 echo "⏱ Installing base system..."
 # Minimal base install
-pacstrap /mnt base linux linux-firmware btrfs-progs sof-firmware amd-ucode base-devel grub efibootmgr nano networkmanager 
+pacstrap /mnt base linux linux-firmware btrfs-progs sof-firmware base-devel grub efibootmgr nano networkmanager 
 
 echo "⏱ Generating fstab..."
 genfstab -U /mnt >> /mnt/etc/fstab
