@@ -8,9 +8,7 @@ cp -r "$ROOT_DIR" /mnt/root/arch-install
 
 arch-chroot /mnt /bin/bash -c "
 set -e
-# Copy the entire arch-install folder to the user's home
-cp -r /root/arch-install /home/$USERNAME/
-chown -R $USERNAME:$USERNAME /home/$USERNAME/arch-install
+
 
 # Load UI helpers
 source /root/arch-install/scripts/lib/ui.sh
@@ -32,6 +30,9 @@ for script in /root/arch-install/scripts/chroot/[0-9][0-9]*.sh; do
     source \"\$script\"
 done
 
+# Copy the entire arch-install folder to the user's home
+cp -r /root/arch-install /home/$USERNAME/
+chown -R $USERNAME:$USERNAME /home/$USERNAME/arch-install
 
 "
 
