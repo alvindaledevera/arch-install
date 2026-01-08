@@ -32,17 +32,18 @@ done
 # -----------------------------
 # USER SCRIPTS
 # -----------------------------
-if id \"$USERNAME\" &>/dev/null; then
+if id "$USERNAME" &>/dev/null; then
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo "▶ Running USER scripts"
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-    runuser -u "$USERNAME" -- bash -c '
-    for script in /home/'"$USERNAME"'/user/*.sh; do
-        echo "➡ Running as '"$USERNAME"': $(basename $script)"
-        bash "$script"
+    runuser -u "$USERNAME" -- bash -c "
+    for script in /home/$USERNAME/user/*.sh; do
+        echo '➡ Running as $USERNAME: ' \$(basename \$script)
+        bash \$script
     done
+    "
 else
-    echo \"⚠ User $USERNAME not found — skipping user scripts\"
+    echo "⚠ User $USERNAME not found — skipping user scripts"
 fi
 "
