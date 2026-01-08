@@ -1,17 +1,32 @@
 #!/usr/bin/env bash
 set -e
 
-print_stage "$0"
+echo "🌍 Detecting country for fastest mirrors..."
 
-echo "⏱ Updating pacman mirrors and enabling parallel downloads..."
+# Detect country via IP (fallback to PH)
+COUNTRY="$(curl -fsSL https://ipapi.co/country || true)"
+COUNTRY="${COUNTRY}"
 
-# Install reflector if missing
+echo "📍 Using mirror country: $COUNTRY"
+
+echo "⚡ Installing reflector (if needed)..."
 pacman -Sy --noconfirm reflector
 
-# Update mirrorlist with fastest HTTPS mirrors
-reflector --latest 10 --protocol https --sort rate --save /etc/pacman.d/mirrorlist
+echo "🚀 Updating mirrorlist..."
+reflector \
+  --country "$COUNTRY" \
+  --protocol https \
+  --latest 10 \
+  --sort rate \
+  --save /etc/pacman.d/mirrorlist
 
-# Enable parallel downloads
-sed -i 's/^#ParallelDownloads/ParallelDownloads = 5/' /etc/pacman.conf
+echo "⚙️ Enabling parallel downloads..."
+
+# Uncomment + set ParallelDownloads safely
+if grep -q '^#ParallelDownloads' /etc/pacman.conf; then
+  sed -i 's/^#ParallelDownloads.*/ParallelDownloads = 5/' /etc/pacman.conf
+elif ! grep -q '^ParallelDownloads' /etc/pacman.conf; then
+  echo 'ParallelDownloads = 5' >> /etc/pacman.conf
+fi
 
 echo "✅ Mirrors updated and parallel downloads enabled"
