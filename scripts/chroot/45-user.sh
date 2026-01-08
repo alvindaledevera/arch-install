@@ -8,13 +8,21 @@ set -e
 # $USERNAME is already exported from 00-prompt.sh
 useradd -m -G wheel "$USERNAME"
 
+# Function to safely set password
+set_password() {
+    local user=$1
+    while true; do
+        echo "Set password for $user:"
+        passwd "$user" && break
+        echo "❌ Passwords do not match, try again."
+    done
+}
+
 # Set password for the new user
-echo "Set password for user $USERNAME:"
-passwd "$USERNAME"
+set_password "$USERNAME"
 
 # Set root password
-echo "Set password for root:"
-passwd
+set_password root
 
 # Enable wheel group for sudo
 sed -i 's/# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' /etc/sudoers
