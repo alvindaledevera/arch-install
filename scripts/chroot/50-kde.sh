@@ -9,7 +9,7 @@ set -e
 echo "⏱ Installing KDE Plasma Desktop and SDDM..."
 
 # Install KDE Plasma, SDDM (display manager), and useful apps
-pacman -Sy --noconfirm plasma sddm
+pacman -Sy --noconfirm plasma sddm konsole
 
 # Enable SDDM display manager
 systemctl enable sddm
