@@ -20,14 +20,12 @@ run_stage() {
 }
 
 # -------------------------
-# Installation stages
+# Dynamic installation stages
 # -------------------------
-run_stage "$ROOT_DIR/scripts/00-prompt.sh"     # user input
-run_stage "$ROOT_DIR/scripts/01-checks.sh"     # preflight checks
-run_stage "$ROOT_DIR/scripts/05-time.sh"       # timezone & NTP
-run_stage "$ROOT_DIR/scripts/10-luks-btrfs.sh" # partitions, encryption
-run_stage "$ROOT_DIR/scripts/20-mount.sh"      # mount Btrfs subvols
-run_stage "$ROOT_DIR/scripts/30-base.sh"       # install base packages
-run_stage "$ROOT_DIR/scripts/40-chroot.sh"     # chroot & configure system
+for script in $(ls "$ROOT_DIR/scripts"/*.sh | sort); do
+    # Skip lib scripts
+    [[ $script == *"/lib/"* ]] && continue
+    run_stage "$script"
+done
 
 echo "✅ Installation finished!"
