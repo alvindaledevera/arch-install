@@ -1,28 +1,24 @@
 #!/usr/bin/env bash
 set -e
 
-echo "🌍 Detecting country for fastest mirrors..."
+echo "🌍 Detecting nearest mirrors using GeoIP..."
 
-# Detect country via IP (fallback to PH)
-COUNTRY="$(curl -fsSL https://ipapi.co/country || true)"
-COUNTRY="${COUNTRY}"
-
-echo "📍 Using mirror country: $COUNTRY"
-
-echo "⚡ Installing reflector (if needed)..."
+# Install reflector if missing
 pacman -Sy --noconfirm reflector
 
-echo "🚀 Updating mirrorlist..."
-reflector \
-  --country "$COUNTRY" \
-  --protocol https \
-  --latest 10 \
-  --sort rate \
-  --save /etc/pacman.d/mirrorlist
+# Attempt to update mirrorlist using GeoIP (auto-detect country)
+if reflector --latest 20 --protocol https --sort rate --geoip --save /etc/pacman.d/mirrorlist; then
+    # Try to get detected country from reflector output
+    COUNTRY=$(reflector --latest 1 --protocol https --sort rate --geoip | grep 'Mirror' | head -n1 | awk '{print $4}')
+    echo "📍 Using mirror country: ${COUNTRY:-Unknown}"
+else
+    echo "⚠ Failed to detect nearest mirrors, falling back to global mirrors..."
+    reflector --latest 20 --protocol https --sort rate --country all --save /etc/pacman.d/mirrorlist
+    echo "🌐 Using global mirrors as fallback."
+fi
 
+# Enable parallel downloads safely
 echo "⚙️ Enabling parallel downloads..."
-
-# Uncomment + set ParallelDownloads safely
 if grep -q '^#ParallelDownloads' /etc/pacman.conf; then
   sed -i 's/^#ParallelDownloads.*/ParallelDownloads = 5/' /etc/pacman.conf
 elif ! grep -q '^ParallelDownloads' /etc/pacman.conf; then
