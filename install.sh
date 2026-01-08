@@ -29,6 +29,12 @@ for script in "$ROOT_DIR"/scripts/*.sh; do
     run_stage "$script"
 done
 
-arch-chroot /mnt /usr/bin/runuser -u "$USERNAME" -- bash /home/$USERNAME/arch-install/scripts/user/41-user-run.sh
-
+arch-chroot /mnt /usr/bin/runuser -u "$USERNAME" -- bash -c '
+for script in /root/arch-install/scripts/user/*.sh; do
+    [[ "$script" == *"41-user-run.sh"* ]] && continue
+    source /root/arch-install/scripts/lib/ui.sh
+    print_stage "$script"
+    bash "$script"
+done
+'
 echo "✅ Installation finished!"
