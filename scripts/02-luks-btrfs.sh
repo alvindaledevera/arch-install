@@ -9,8 +9,19 @@ umount -R /mnt 2>/dev/null || true
 # Close existing mapping if any
 cryptsetup close cryptroot 2>/dev/null || true
 
+# Function to safely format LUKS without exiting on mismatch
+format_luks() {
+    while true; do
+        if cryptsetup luksFormat "$ARCH_PART"; then
+            break
+        else
+            echo "⚠️ Passwords do not match or invalid. Please try again."
+        fi
+    done
+}
+
 # Format LUKS
-cryptsetup luksFormat "$ARCH_PART"
+format_luks
 
 # Open LUKS
 echo "🔒 Opening LUKS on $ARCH_PART"
