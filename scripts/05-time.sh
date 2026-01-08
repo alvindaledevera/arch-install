@@ -10,4 +10,3 @@ timedatectl set-ntp true
 
 echo "✅ Time sync enabled and timezone set"
 timedatectl status | grep "Time zone\|System clock"
-sss
