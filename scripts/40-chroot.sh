@@ -33,16 +33,14 @@ done
 # USER SCRIPTS
 # -----------------------------
 if id \"$USERNAME\" &>/dev/null; then
-    echo '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'
-    echo '▶ Running USER scripts'
-    echo '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "▶ Running USER scripts"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-    for script in /root/arch-install/scripts/user/[0-9][0-9]*.sh; do
-        [ -f \"\$script\" ] || continue
-        echo \"➡ Running as $USERNAME: \$(basename \"\$script\")\"
-
-        runuser -u \"$USERNAME\" -- bash \"\$script\" \
-            |& tee \"/home/$USERNAME/\$(basename \"\$script\").log\"
+    runuser -u "$USERNAME" -- bash -c '
+    for script in /home/'"$USERNAME"'/user/*.sh; do
+        echo "➡ Running as '"$USERNAME"': $(basename $script)"
+        bash "$script"
     done
 else
     echo \"⚠ User $USERNAME not found — skipping user scripts\"

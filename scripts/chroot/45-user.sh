@@ -27,4 +27,11 @@ set_password root
 # Enable wheel group for sudo
 sed -i 's/# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' /etc/sudoers
 
+# Copy user scripts
+cp -r /root/arch-install/scripts/user /home/$USERNAME/
+
+# Fix ownership & permissions
+chown -R $USERNAME:$USERNAME /home/$USERNAME/user
+chmod +x /home/$USERNAME/user/*.sh
+
 echo "✅ User $USERNAME created and sudo configured"
