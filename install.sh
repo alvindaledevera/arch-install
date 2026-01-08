@@ -12,6 +12,7 @@ source "$ROOT_DIR/scripts/lib/ui.sh"
 chmod +x "$ROOT_DIR"/scripts/*.sh
 chmod +x "$ROOT_DIR"/scripts/chroot/*.sh
 chmod +x "$ROOT_DIR"/scripts/lib/*.sh
+chmod +x "$ROOT_DIR"/scripts/user/*.sh
 
 # Wrapper to auto-print stage
 run_stage() {
