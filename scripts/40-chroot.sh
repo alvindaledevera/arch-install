@@ -37,12 +37,14 @@ if id "$USERNAME" &>/dev/null; then
     echo "▶ Running USER scripts"
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-    runuser -u "$USERNAME" -- bash -c "
-    for script in /home/$USERNAME/user/*.sh; do
-        echo '➡ Running as $USERNAME: ' \$(basename \$script)
-        bash \$script
+    runuser -u "$USERNAME" -- bash -c '
+    source /home/'"$USERNAME"'/lib/ui.sh  # Make sure print_stage is available
+
+    for script in /home/'"$USERNAME"'/user/*.sh; do
+        print_stage "$script"
+        bash "$script"
     done
-    "
+    '
 else
     echo "⚠ User $USERNAME not found — skipping user scripts"
 fi
