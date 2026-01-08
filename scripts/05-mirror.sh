@@ -6,13 +6,18 @@ echo "⏱ Updating pacman mirrors and enabling parallel downloads..."
 # Install reflector if missing
 pacman -Sy --noconfirm reflector
 
-# Try to fetch top 10 fastest PH HTTPS mirrors
-echo "🌍 Fetching top 10 fastest PH mirrors..."
-mapfile -t MIRRORS < <(reflector --country PH --protocol https --latest 10 --sort rate --save /tmp/mirrorlist.tmp && awk '{print $1}' /tmp/mirrorlist.tmp)
+# Detect country via IP
+COUNTRY="$(curl -fsSL https://ipapi.co/country || true)"
+COUNTRY="${COUNTRY}"
 
-# Fallback to global mirrors if no PH mirrors found
+echo "🌍 Using country: $COUNTRY"
+
+# Try to fetch top 10 fastest mirrors for the detected country
+mapfile -t MIRRORS < <(reflector --country "$COUNTRY" --protocol https --latest 10 --sort rate --save /tmp/mirrorlist.tmp && awk '{print $1}' /tmp/mirrorlist.tmp)
+
+# Fallback to global mirrors if no mirrors found for detected country
 if [ ${#MIRRORS[@]} -eq 0 ]; then
-    echo "⚠ No PH mirrors found, using global mirrors..."
+    echo "⚠ No mirrors found for $COUNTRY, using global mirrors..."
     mapfile -t MIRRORS < <(reflector --country all --protocol https --latest 10 --sort rate --save /tmp/mirrorlist.tmp && awk '{print $1}' /tmp/mirrorlist.tmp)
 fi
 
