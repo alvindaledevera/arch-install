@@ -15,7 +15,7 @@ TIMEZONE="${TIMEZONE:-Asia/Manila}"
 # User Inputs
 # -----------------------------
 read -rp "EFI partition (e.g. nvme0n1p1 or vda1 sda1): " EFI_PART
-read -rp "Arch partition (WILL BE ERASED! nvme0n1p2 or vda2 sda2):" ARCH_PART
+read -rp "Arch partition (WILL BE ERASED! nvme0n1p2 or vda2 sda2): " ARCH_PART
 read -rp "Hostname: " HOSTNAME
 read -rp "Username: " USERNAME
 read -rp "Keyboard layout [us]: " KEYMAP
