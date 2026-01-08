@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-ARCH_PART="$1"
 
 sed -i 's/^HOOKS=.*/HOOKS=(base systemd autodetect keyboard sd-vconsole modconf block sd-encrypt filesystems fsck)/' /etc/mkinitcpio.conf
 mkinitcpio -P

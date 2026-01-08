@@ -1,11 +1,30 @@
 #!/usr/bin/env bash
-HOSTNAME="$1"
-TIMEZONE="$2"
+set -e
 
-ln -sf /usr/share/zoneinfo/$TIMEZONE /etc/localtime
-hwclock --systohc
+echo "⏱ Setting hostname, locale, keyboard, and timezone..."
 
-sed -i 's/#en_US.UTF-8/en_US.UTF-8/' /etc/locale.gen
-locale-gen
-echo "LANG=en_US.UTF-8" > /etc/locale.conf
+# -------------------------
+# Hostname
+# -------------------------
 echo "$HOSTNAME" > /etc/hostname
+
+# -------------------------
+# Localization
+# -------------------------
+echo "LANG=$LOCALE" > /etc/locale.conf
+sed -i "s/^#${LOCALE}/${LOCALE}/" /etc/locale.gen
+locale-gen
+
+# -------------------------
+# Keyboard
+# -------------------------
+echo "KEYMAP=$KEYMAP" > /etc/vconsole.conf
+
+# -------------------------
+# Timezone & NTP
+# -------------------------
+ln -sf "/usr/share/zoneinfo/$TIMEZONE" /etc/localtime
+hwclock --systohc
+timedatectl set-ntp true
+
+echo "✅ System configuration complete"

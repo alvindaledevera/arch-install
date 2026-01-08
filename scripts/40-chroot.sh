@@ -1,12 +1,16 @@
 #!/usr/bin/env bash
+set -e
 
-cp -r scripts/chroot /mnt/root/chroot
-arch-chroot /mnt /root/chroot/41-system.sh \
-"$HOSTNAME" "$TIMEZONE"
+# Copy chroot scripts into installed system
+cp -r "$ROOT_DIR/scripts/chroot" /mnt/root/chroot
+chmod +x /mnt/root/chroot/*.sh
 
-arch-chroot /mnt /root/chroot/42-boot.sh "$ARCH_PART"
-arch-chroot /mnt /root/chroot/43-network.sh
-arch-chroot /mnt /root/chroot/44-zram.sh
-arch-chroot /mnt /root/chroot/45-user.sh "$USERNAME"
+# -------------------------
+# Export variables to chroot
+# -------------------------
+arch-chroot /mnt /bin/bash -c "export EFI_PART='$EFI_PART' ARCH_PART='$ARCH_PART' HOSTNAME='$HOSTNAME' USERNAME='$USERNAME' KEYMAP='$KEYMAP' LOCALE='$LOCALE' TIMEZONE='$TIMEZONE'; \
+for script in /root/chroot/[0-9][0-9]*.sh; do
+    bash \"\$script\"
+done"
 
-echo "✅ INSTALL COMPLETE"
+echo "✅ Chroot scripts completed"

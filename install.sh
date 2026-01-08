@@ -20,9 +20,9 @@ run_stage() {
 }
 
 # -------------------------
-# Dynamic installation stages
+# Installation stages
 # -------------------------
-for script in $(ls "$ROOT_DIR/scripts"/*.sh | sort); do
+for script in "$ROOT_DIR"/scripts/*.sh; do
     # Skip lib scripts
     [[ $script == *"/lib/"* ]] && continue
     run_stage "$script"
