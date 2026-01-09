@@ -13,13 +13,6 @@ PACMAN_PKGS=(
     fastfetch          # CLI system info tool
 
     # -----------------------------
-    # CPU / Kernel / Firmware
-    # -----------------------------
-    intel-ucode        # CPU microcode updates for Intel CPUs
-    linux-headers      # Kernel headers for building modules
-    linux-firmware     # Firmware for Wi-Fi, Bluetooth, GPU, etc.
-
-    # -----------------------------
     # Networking & Wi-Fi
     # -----------------------------
     networkmanager     # Network manager for Wi-Fi and Ethernet
