@@ -30,7 +30,6 @@ UUID=$(blkid -s UUID -o value "$ARCH_PART")
 cat <<EOF > /boot/loader/entries/arch.conf
 title   Arch Linux
 linux   /vmlinuz-linux
-initrd  /intel-ucode.img
 initrd  /initramfs-linux.img
 options rd.luks.name=$UUID=cryptroot root=/dev/mapper/cryptroot rootflags=subvol=@ rw
 EOF
