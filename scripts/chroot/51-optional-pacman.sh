@@ -80,7 +80,6 @@ PACMAN_PKGS=(
     man-db              # Database and utilities for 'man' command
     man-pages           # Offline manual pages for Linux
     texinfo             # Tools to read/build info pages
-    testinfo            # Utility to check info documentation files
 )
 
 
