@@ -39,15 +39,12 @@ PACMAN_PKGS=(
     # -----------------------------
     fprintd            # Fingerprint daemon
     libfprint          # Library for fingerprint devices
-    pam_fprintd        # PAM module for fingerprint login
-    pcsc-lite          # Smartcard support (used by some fingerprint readers)
-    plasma-fprint      # KDE GUI for fingerprint enrollment
+    pcsclite          # Smartcard support (used by some fingerprint readers)
 
     # -----------------------------
     # Power management
     # -----------------------------
     acpid              # Power management daemon (lid close, sleep, etc.)
-    thinkpad-acpi      # ThinkPad-specific ACPI support
     tlp                # Advanced power management for laptops
     tlp-rdw            # Radio device support for TLP
     powertop           # Power consumption analysis tool
@@ -58,7 +55,6 @@ PACMAN_PKGS=(
     pipewire           # Modern audio server
     pipewire-pulse     # PipeWire replacement for PulseAudio
     pipewire-alsa      # ALSA support for PipeWire
-    pipewire-jack      # JACK support for PipeWire
     pavucontrol        # GUI volume control for PipeWire/PulseAudio
 
     # -----------------------------
