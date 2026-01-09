@@ -70,7 +70,6 @@ PACMAN_PKGS=(
     man-pages           # Offline manual pages for Linux
     texinfo             # Tools to read/build info pages
 
-    intel-ucode
 )
 
 
