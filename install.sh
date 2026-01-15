@@ -1,43 +1,81 @@
 #!/usr/bin/env bash
-set -e
+set -euo pipefail
 
-# Root directory
+# ==================================================
+# Arch Linux Install Script (Runner)
+# ==================================================
+
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-export ROOT_DIR
 
-# Load UI helpers
-source "$ROOT_DIR/scripts/lib/ui.sh"
+# -----------------------------
+# Load config
+# -----------------------------
+CONFIG_FILE="${ROOT_DIR}/vars.conf"
 
-# Make scripts executable
-chmod +x "$ROOT_DIR"/scripts/*.sh
-chmod +x "$ROOT_DIR"/scripts/chroot/*.sh
-chmod +x "$ROOT_DIR"/scripts/lib/*.sh
-chmod +x "$ROOT_DIR"/scripts/user/*.sh
+if [[ ! -f "$CONFIG_FILE" ]]; then
+  echo "ERROR: vars.conf not found"
+  echo "Copy vars.conf.example → vars.conf and edit it"
+  exit 1
+fi
 
-# Wrapper to auto-print stage
-run_stage() {
-    print_stage "$1"
-    source "$1"
+source "$CONFIG_FILE"
+
+# -----------------------------
+# Load libraries
+# -----------------------------
+for lib in ui log disk pacman chroot; do
+  source "${ROOT_DIR}/lib/${lib}.sh"
+done
+
+# -----------------------------
+# Helpers
+# -----------------------------
+run_dir() {
+  local dir="$1"
+
+  ui_section "Running ${dir}"
+
+  for script in "${ROOT_DIR}/${dir}"/*.sh; do
+    [[ -x "$script" ]] || chmod +x "$script"
+    ui_step "$(basename "$script")"
+    "$script"
+  done
 }
 
-# -------------------------
-# Installation stages
-# -------------------------
-for script in "$ROOT_DIR"/scripts/*.sh; do
-    # Skip lib scripts
-    [[ $script == *"/lib/"* ]] && continue
-    run_stage "$script"
-done
+run_chroot_dir() {
+  local dir="$1"
 
-arch-chroot /mnt /usr/bin/runuser -u "$USERNAME" -- bash -c '
-set -e
-source /home/'"$USERNAME"'/arch-install/scripts/lib/ui.sh
+  ui_section "Running ${dir} (chroot)"
 
-for script in /home/'"$USERNAME"'/arch-install/scripts/user/*.sh; do
-    [[ $script == */lib/* ]] && continue
-    print_stage "$(basename "$script")"
-    bash "$script"
-done
-'
+  for script in "${ROOT_DIR}/${dir}"/*.sh; do
+    [[ -x "$script" ]] || chmod +x "$script"
+    ui_step "$(basename "$script")"
+    run_in_chroot "/bin/bash" < "$script"
+  done
+}
 
-echo "✅ Installation finished!"
+# -----------------------------
+# Safety checks
+# -----------------------------
+if [[ $EUID -ne 0 ]]; then
+  ui_error "This script must be run as root"
+  exit 1
+fi
+
+if [[ ! -d /sys/firmware/efi ]]; then
+  ui_error "System not booted in UEFI mode"
+  exit 1
+fi
+
+# -----------------------------
+# Main flow (Arch Wiki order)
+# -----------------------------
+ui_banner "Arch Linux Installation Started"
+
+run_dir "01-pre-installation"
+run_dir "02-disk-setup"
+run_dir "03-installation"
+run_chroot_dir "04-configure-system"
+run_dir "05-post-install"
+
+ui_success "Installation complete! You can reboot now 🚀"

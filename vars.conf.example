@@ -1,6 +1,84 @@
-DISK=/dev/nvme0n1
-EFI_PART=/dev/nvme0n1p1
-ARCH_PART=/dev/nvme0n1p2
-HOSTNAME=archlinux
-USERNAME=user
-TIMEZONE=Asia/Manila
+# ==================================================
+# Arch Linux Installation Configuration
+# ==================================================
+# Copy this file to vars.conf and edit values
+# ==================================================
+
+# -----------------------------
+# Disk configuration
+# -----------------------------
+
+# Target disk (WARNING: WILL BE ERASED)
+DISK="/dev/nvme0n1"
+
+# EFI System Partition
+EFI_PART="${DISK}p1"
+EFI_SIZE="512M"
+
+# LUKS encrypted root partition
+ROOT_PART="${DISK}p2"
+LUKS_NAME="cryptroot"
+
+# Filesystem
+FS_TYPE="btrfs"          # btrfs | ext4
+BTRFS_SUBVOLUMES="@"     # space-separated if needed
+
+# Mount points
+MOUNT_ROOT="/mnt"
+MOUNT_BOOT="/mnt/boot"
+
+# -----------------------------
+# System identity
+# -----------------------------
+
+HOSTNAME="archlinux"
+
+TIMEZONE="Asia/Manila"
+LOCALE="en_US.UTF-8"
+KEYMAP="us"
+
+# -----------------------------
+# Network
+# -----------------------------
+
+NET_IFACE=""             # leave empty for auto-detect
+USE_NETWORKMANAGER=true  # true | false
+
+# -----------------------------
+# Users
+# -----------------------------
+
+ROOT_PASSWORD=""         # leave empty to be prompted
+USERNAME="alvin"
+USER_PASSWORD=""         # leave empty to be prompted
+USER_GROUPS="wheel,audio,video,storage"
+
+# -----------------------------
+# Bootloader
+# -----------------------------
+
+BOOTLOADER="systemd-boot"  # systemd-boot | grub
+KERNEL="linux"
+
+# -----------------------------
+# Packages
+# -----------------------------
+
+BASE_PACKAGES="base linux linux-firmware"
+EXTRA_PACKAGES="vim git sudo networkmanager"
+
+# Desktop (post-install)
+INSTALL_KDE=true
+
+# -----------------------------
+# AUR
+# -----------------------------
+
+INSTALL_YAY=true
+
+# -----------------------------
+# Installer behavior
+# -----------------------------
+
+AUTO_CONFIRM=true        # auto yes to prompts
+DRY_RUN=false            # true = print commands only
