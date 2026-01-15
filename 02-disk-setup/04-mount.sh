@@ -1,56 +1,39 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# ==================================================
-# 04-mount.sh
-# Mount LUKS + Btrfs subvolumes + EFI
-# ==================================================
-
 ui_banner "Mounting Filesystems"
 
 # -------------------------------------------------
-# Btrfs mount options
+# Determine device
 # -------------------------------------------------
-BTRFS_OPTS="rw,noatime,compress=zstd:3,ssd,discard=async,space_cache=v2,commit=120"
+if [[ "$FS_TYPE" == "btrfs" ]]; then
+    BTRFS_OPTS="rw,noatime,compress=zstd:3,ssd,discard=async,space_cache=v2,commit=120"
 
-# -------------------------------------------------
-# Ensure mount points exist
-# -------------------------------------------------
-mkdir -p "$MOUNT_ROOT" "$MOUNT_BOOT" "$MOUNT_ROOT/home" "$MOUNT_ROOT/.snapshots"
+    ui_info "Mounting root subvolume @ ..."
+    mount -o "$BTRFS_OPTS,subvol=@" "$TARGET_DEV" /mnt
 
-# -------------------------------------------------
-# Open LUKS container if needed
-# -------------------------------------------------
-if [[ -n "${USE_LUKS:-}" ]] && [[ "${USE_LUKS}" =~ ^[Yy]$ ]]; then
-    ui_info "Opening LUKS container..."
-    cryptsetup open "$ROOT_PART" cryptroot
-    TARGET_DEV="/dev/mapper/cryptroot"
+    ui_info "Mounting home subvolume @home ..."
+    mount -o "$BTRFS_OPTS,subvol=@home" "$TARGET_DEV" /mnt/home
+
+    ui_info "Mounting snapshots subvolume @snapshots ..."
+    mount -o "$BTRFS_OPTS,subvol=@snapshots" "$TARGET_DEV" /mnt/.snapshots
 else
-    TARGET_DEV="$ROOT_PART"
+    ui_info "Mounting Ext4 root ..."
+    mount "$TARGET_DEV" /mnt
+    mkdir -p /mnt/home /mnt/.snapshots
 fi
 
 # -------------------------------------------------
-# Mount root subvolume
+# Mount EFI
 # -------------------------------------------------
-ui_info "Mounting root subvolume @ ..."
-mount -o "$BTRFS_OPTS,subvol=@" "$TARGET_DEV" "$MOUNT_ROOT"
-
-# -------------------------------------------------
-# Mount home subvolume
-# -------------------------------------------------
-ui_info "Mounting home subvolume @home ..."
-mount -o "$BTRFS_OPTS,subvol=@home" "$TARGET_DEV" "$MOUNT_ROOT/home"
-
-# -------------------------------------------------
-# Mount snapshots subvolume
-# -------------------------------------------------
-ui_info "Mounting snapshots subvolume @snapshots ..."
-mount -o "$BTRFS_OPTS,subvol=@snapshots" "$TARGET_DEV" "$MOUNT_ROOT/.snapshots"
-
-# -------------------------------------------------
-# Mount EFI partition
-# -------------------------------------------------
-ui_info "Mounting EFI partition ..."
-mount "$EFI_PART" "$MOUNT_BOOT"
+ui_info "Mounting EFI partition $EFI_PART ..."
+mount "$EFI_PART" /mnt/boot
 
 ui_success "All filesystems mounted successfully"
+
+# -------------------------------------------------
+# Export mounts
+# -------------------------------------------------
+export MOUNT_ROOT="/mnt"
+export MOUNT_BOOT="/mnt/boot"
+export CRYPT_ROOT="$TARGET_DEV"
