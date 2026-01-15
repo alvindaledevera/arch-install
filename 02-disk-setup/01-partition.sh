@@ -147,13 +147,16 @@ ui_step "Root Part  : $ROOT_PART"
 ui_step "LUKS Root  : $USE_LUKS"
 
 # -------------------------------------------------
-# Final confirmation
+# Final confirmation (default = YES)
 # -------------------------------------------------
-read -rp "Type YES to continue: " CONFIRM
-[[ "$CONFIRM" == "YES" ]] || {
+read -rp "Continue with this partition layout? [Y/n]: " CONFIRM
+CONFIRM="${CONFIRM:-Y}"
+
+if [[ ! "$CONFIRM" =~ ^[Yy]([Ee][Ss])?$ ]]; then
     ui_error "Aborted by user"
     exit 1
-}
+fi
+
 
 ui_success "Partition layout confirmed"
 
