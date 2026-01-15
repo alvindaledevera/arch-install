@@ -6,27 +6,27 @@ ui_banner "Filesystem Setup"
 # Determine target device
 if [[ "${USE_LUKS:-}" == "yes" ]]; then
     TARGET_DEV="/dev/mapper/cryptroot"
-    RAW_DEV="$ROOT_PART"
 else
     TARGET_DEV="$ROOT_PART"
-    RAW_DEV="$ROOT_PART"
 fi
 
 ui_info "Target device: $TARGET_DEV"
 
-# Unmount / clean previous mounts
+# Unmount previous mounts
 umount -R /mnt 2>/dev/null || true
 rm -rf /mnt/* 2>/dev/null || true
 mkdir -p /mnt /mnt/home /mnt/.snapshots /mnt/boot
 
-# Close LUKS temporarily if formatting Ext4
-if [[ "${USE_LUKS:-}" == "yes" ]] && cryptsetup status cryptroot &>/dev/null; then
-    ui_info "Closing LUKS container temporarily for formatting..."
-    cryptsetup close cryptroot
+# Ensure LUKS container is open if encrypted
+if [[ "${USE_LUKS:-}" == "yes" ]]; then
+    if ! cryptsetup status cryptroot &>/dev/null; then
+        ui_info "Opening LUKS container..."
+        cryptsetup open "$ROOT_PART" cryptroot
+    fi
 fi
 
-# Filesystem selection (default Btrfs)
-FS_TYPE="${FS_TYPE:-btrfs}"
+# Filesystem selection
+FS_TYPE="${FS_TYPE:-btrfs}"  # default Btrfs
 ui_section "Filesystem selection"
 echo "Available filesystems:"
 echo "  [1] btrfs"
@@ -40,7 +40,6 @@ ui_info "Selected filesystem: $FS_TYPE"
 
 # Format filesystem
 if [[ "$FS_TYPE" == "btrfs" ]]; then
-    [[ "${USE_LUKS:-}" == "yes" ]] && cryptsetup open "$RAW_DEV" cryptroot
     ui_info "Formatting $TARGET_DEV as Btrfs..."
     mkfs.btrfs -f "$TARGET_DEV"
 
@@ -51,12 +50,10 @@ if [[ "$FS_TYPE" == "btrfs" ]]; then
     btrfs subvolume create /mnt/@snapshots
     umount /mnt
 else
-    ui_info "Formatting $RAW_DEV as Ext4..."
-    mkfs.ext4 -F "$RAW_DEV"
-    [[ "${USE_LUKS:-}" == "yes" ]] && cryptsetup open "$RAW_DEV" cryptroot && TARGET_DEV="/dev/mapper/cryptroot"
+    ui_info "Formatting $TARGET_DEV as Ext4..."
+    mkfs.ext4 -F "$TARGET_DEV"
 fi
 
 ui_success "Root filesystem formatted"
 
-# Export for mount script
 export FS_TYPE TARGET_DEV
