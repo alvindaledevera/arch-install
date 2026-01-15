@@ -3,12 +3,12 @@ set -euo pipefail
 
 # ===================================================
 # 02-disk-setup/01-partition.sh
-# Interactive Disk Partitioning
-# Dual-boot safe: reuse EFI or create new
+# Manual Disk Partitioning with cfdisk
+# Dual-boot safe: select EFI / root partitions
 # Optional LUKS encryption
 # ===================================================
 
-ui_banner "Disk Partitioning (Manual)"
+ui_banner "Disk Partitioning (Manual - cfdisk)"
 
 # -----------------------------
 # List all disks
@@ -16,56 +16,32 @@ ui_banner "Disk Partitioning (Manual)"
 ui_step "Available disks:"
 lsblk -d -o NAME,SIZE,TYPE | grep disk
 
-read -rp "Enter disk to use (e.g. /dev/nvme0n1 or /dev/sda): " DISK
+read -rp "Enter disk to partition manually (e.g. /dev/sda, /dev/nvme0n1): " DISK
 [[ -b "$DISK" ]] || { ui_error "Disk not found: $DISK"; exit 1; }
 
 # -----------------------------
-# List partitions on selected disk
+# Open cfdisk for manual partitioning
 # -----------------------------
-ui_step "Available partitions on $DISK:"
-lsblk "$DISK" -o NAME,SIZE,FSTYPE,MOUNTPOINT
+ui_info "Opening cfdisk for manual partitioning..."
+ui_info "Create EFI (FAT32) and root partitions as needed."
+ui_info "Make sure EFI partition has 'boot' flag."
+ui_info "After finishing, write changes and quit."
 
-# -----------------------------
-# EFI Partition Selection
-# -----------------------------
-# Detect existing EFI partitions (FAT32, empty mountpoint)
-mapfile -t EFI_CANDIDATES < <(lsblk "$DISK" -o NAME,FSTYPE,MOUNTPOINT | awk '$2=="vfat" && $3=="" {print "/dev/"$1}')
+cfdisk "$DISK"
 
-if [ ${#EFI_CANDIDATES[@]} -gt 0 ]; then
-    ui_step "Existing EFI partitions found:"
-    for i in "${!EFI_CANDIDATES[@]}"; do
-        echo "  [$i] ${EFI_CANDIDATES[$i]}"
-    done
-    read -rp "Select EFI partition to use (leave empty to create new if free space exists): " EFI_IDX
-    if [[ -n "$EFI_IDX" && "$EFI_IDX" =~ ^[0-9]+$ && "$EFI_IDX" -lt "${#EFI_CANDIDATES[@]}" ]]; then
-        EFI_PART="${EFI_CANDIDATES[$EFI_IDX]}"
-        ui_info "Using existing EFI: $EFI_PART"
-    fi
-fi
-
-# If no EFI selected yet, try to create new
-if [[ -z "${EFI_PART:-}" ]]; then
-    # Detect first free space
-    FREE_START=$(parted "$DISK" print free | awk '/Free Space/ {print $2}' | head -n 1)
-    if [[ -z "$FREE_START" ]]; then
-        ui_error "No free space available to create EFI partition! Please select an existing one."
-        exit 1
-    fi
-
-    read -rp "Enter size for new EFI partition [1G]: " EFI_SIZE
-    EFI_SIZE="${EFI_SIZE:-1G}"
-
-    ui_step "Creating EFI partition..."
-    parted "$DISK" --script mkpart ESP fat32 "$FREE_START" "$EFI_SIZE"
-    parted "$DISK" --script set 1 boot on
-    EFI_PART="${DISK}1"
-    ui_info "Created EFI partition: $EFI_PART"
-fi
+echo
+ui_step "After finishing partitioning in cfdisk, enter the partitions to use:"
 
 # -----------------------------
-# Root Partition Selection
+# EFI partition
 # -----------------------------
-read -rp "Enter root partition to install Arch (WILL BE FORMATTED): " ROOT_PART
+read -rp "EFI partition (FAT32, boot): " EFI_PART
+[[ -b "$EFI_PART" ]] || { ui_error "EFI partition not found"; exit 1; }
+
+# -----------------------------
+# Root partition
+# -----------------------------
+read -rp "Root partition (WILL BE FORMATTED): " ROOT_PART
 [[ -b "$ROOT_PART" ]] || { ui_error "Root partition not found"; exit 1; }
 
 # -----------------------------
