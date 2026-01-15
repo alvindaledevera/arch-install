@@ -36,7 +36,7 @@ ui_step "Creating GPT partition table..."
 parted "$DISK" --script mklabel gpt
 
 # EFI Partition
-ui_step "Creating EFI partition (${EFI_SIZE:-512M})..."
+ui_step "Creating EFI partition (${EFI_SIZE})..."
 parted "$DISK" --script mkpart ESP fat32 1MiB "${EFI_SIZE}"
 parted "$DISK" --script set 1 boot on
 
