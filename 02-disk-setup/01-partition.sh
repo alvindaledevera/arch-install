@@ -3,7 +3,7 @@ set -euo pipefail
 
 # ===================================================
 # 02-disk-setup/01-partition.sh
-# Disk selection + manual partitioning (cfdisk)
+# Manual disk + partition selection (cfdisk)
 # ===================================================
 
 ui_banner "Disk Partitioning (Manual - cfdisk)"
@@ -11,88 +11,144 @@ ui_banner "Disk Partitioning (Manual - cfdisk)"
 # -------------------------------------------------
 # Detect available disks
 # -------------------------------------------------
-mapfile -t AVAILABLE_DISKS < <(lsblk -dpno NAME,TYPE | awk '$2=="disk"{print $1}')
+mapfile -t DISKS < <(lsblk -dpno NAME,TYPE | awk '$2=="disk"{print $1}')
 
-if [[ ${#AVAILABLE_DISKS[@]} -eq 0 ]]; then
+[[ ${#DISKS[@]} -gt 0 ]] || {
     ui_error "No disks detected"
     exit 1
-fi
+}
 
 # -------------------------------------------------
-# Disk selection
+# Disk picker
 # -------------------------------------------------
-ui_section "Disk selection"
+ui_section "Select disk"
 
-for i in "${!AVAILABLE_DISKS[@]}"; do
-    size=$(lsblk -dn -o SIZE "${AVAILABLE_DISKS[$i]}")
-    echo "  [$i] ${AVAILABLE_DISKS[$i]} ($size)"
+for i in "${!DISKS[@]}"; do
+    size=$(lsblk -dn -o SIZE "${DISKS[$i]}")
+    echo "  [$i] ${DISKS[$i]} ($size)"
 done
 
-read -rp "Select disk to partition: " disk_idx
+read -rp "Select disk number: " DISK_IDX
 
-if [[ -z "$disk_idx" || ! "$disk_idx" =~ ^[0-9]+$ || -z "${AVAILABLE_DISKS[$disk_idx]:-}" ]]; then
+[[ "$DISK_IDX" =~ ^[0-9]+$ ]] && [[ -n "${DISKS[$DISK_IDX]:-}" ]] || {
     ui_error "Invalid disk selection"
     exit 1
-fi
+}
 
-DISK="${AVAILABLE_DISKS[$disk_idx]}"
-ui_info "Selected disk: $DISK"
+DISK="${DISKS[$DISK_IDX]}"
+ui_info "Using disk: $DISK"
 
 # -------------------------------------------------
 # Open cfdisk
 # -------------------------------------------------
-ui_info "Opening cfdisk for manual partitioning..."
-ui_info "Create EFI (FAT32) and root partitions as needed."
-ui_info "Do NOT touch Windows partitions if dual-booting."
-ui_info "Write changes and quit when done."
+ui_info "Opening cfdisk..."
+ui_info "Create / reuse EFI (FAT32) + root partitions"
+ui_info "DO NOT touch Windows partitions if dual-booting"
 
 cfdisk "$DISK"
 
-# -------------------------------------------------
-# Show updated partition table
-# -------------------------------------------------
-echo
-ui_info "Refreshing partition table..."
+sync
 sleep 1
+
+# -------------------------------------------------
+# Show partitions
+# -------------------------------------------------
+ui_section "Detected partitions"
 lsblk -f "$DISK"
 echo
 
 # -------------------------------------------------
-# Select EFI + root partitions
+# Collect partitions (no loop devices)
 # -------------------------------------------------
-read -rp "Enter EFI partition (FAT32, boot): " EFI_PART
-[[ -b "$EFI_PART" ]] || { ui_error "EFI partition not found"; exit 1; }
+mapfile -t PARTS < <(
+    lsblk -lnpo NAME,FSTYPE "$DISK" | awk '$2 != "loop" {print $1 "|" $2}'
+)
 
-read -rp "Enter root partition (WILL BE FORMATTED): " ROOT_PART
-[[ -b "$ROOT_PART" ]] || { ui_error "Root partition not found"; exit 1; }
+[[ ${#PARTS[@]} -gt 0 ]] || {
+    ui_error "No partitions found"
+    exit 1
+}
 
 # -------------------------------------------------
-# Optional LUKS
+# EFI partition picker
 # -------------------------------------------------
-read -rp "Encrypt root partition with LUKS? [y/N]: " USE_LUKS
+ui_section "Select EFI partition (FAT32)"
+
+EFI_CANDIDATES=()
+for p in "${PARTS[@]}"; do
+    name="${p%%|*}"
+    fs="${p##*|}"
+    [[ "$fs" == "vfat" ]] && EFI_CANDIDATES+=("$name")
+done
+
+[[ ${#EFI_CANDIDATES[@]} -gt 0 ]] || {
+    ui_error "No FAT32 partition found (EFI required)"
+    exit 1
+}
+
+for i in "${!EFI_CANDIDATES[@]}"; do
+    size=$(lsblk -dn -o SIZE "${EFI_CANDIDATES[$i]}")
+    echo "  [$i] ${EFI_CANDIDATES[$i]} ($size)"
+done
+
+read -rp "Select EFI partition: " EFI_IDX
+[[ "$EFI_IDX" =~ ^[0-9]+$ ]] && [[ -n "${EFI_CANDIDATES[$EFI_IDX]:-}" ]] || {
+    ui_error "Invalid EFI selection"
+    exit 1
+}
+
+EFI_PART="${EFI_CANDIDATES[$EFI_IDX]}"
+
+# -------------------------------------------------
+# ROOT partition picker
+# -------------------------------------------------
+ui_section "Select ROOT partition (WILL BE FORMATTED)"
+
+ROOT_CANDIDATES=()
+for p in "${PARTS[@]}"; do
+    name="${p%%|*}"
+    [[ "$name" != "$EFI_PART" ]] && ROOT_CANDIDATES+=("$name")
+done
+
+for i in "${!ROOT_CANDIDATES[@]}"; do
+    size=$(lsblk -dn -o SIZE "${ROOT_CANDIDATES[$i]}")
+    fs=$(lsblk -dn -o FSTYPE "${ROOT_CANDIDATES[$i]}")
+    echo "  [$i] ${ROOT_CANDIDATES[$i]} ($size, fs=${fs:-none})"
+done
+
+read -rp "Select ROOT partition: " ROOT_IDX
+[[ "$ROOT_IDX" =~ ^[0-9]+$ ]] && [[ -n "${ROOT_CANDIDATES[$ROOT_IDX]:-}" ]] || {
+    ui_error "Invalid root selection"
+    exit 1
+}
+
+ROOT_PART="${ROOT_CANDIDATES[$ROOT_IDX]}"
+
+# -------------------------------------------------
+# Optional encryption
+# -------------------------------------------------
+read -rp "Encrypt ROOT with LUKS? [y/N]: " USE_LUKS
 USE_LUKS="${USE_LUKS:-N}"
 
 # -------------------------------------------------
 # Summary
 # -------------------------------------------------
 ui_banner "Partition Summary"
-ui_step "Disk        : $DISK"
-ui_step "EFI Part    : $EFI_PART"
-ui_step "Root Part   : $ROOT_PART"
-ui_step "Encrypt root: $USE_LUKS"
+ui_step "Disk       : $DISK"
+ui_step "EFI Part   : $EFI_PART"
+ui_step "Root Part  : $ROOT_PART"
+ui_step "LUKS Root  : $USE_LUKS"
 
 # -------------------------------------------------
 # Final confirmation
 # -------------------------------------------------
-if [[ "${AUTO_CONFIRM:-false}" != "true" ]]; then
-    read -rp "Type YES to continue: " CONFIRM
-    [[ "$CONFIRM" == "YES" ]] || {
-        ui_error "Partitioning aborted"
-        exit 1
-    }
-fi
+read -rp "Type YES to continue: " CONFIRM
+[[ "$CONFIRM" == "YES" ]] || {
+    ui_error "Aborted by user"
+    exit 1
+}
 
-ui_success "Disk and partitions confirmed"
+ui_success "Partition layout confirmed"
 
 # -------------------------------------------------
 # Export for next steps
