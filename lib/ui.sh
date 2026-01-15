@@ -35,7 +35,7 @@ ui_section() {
 }
 
 ui_step() {
-  echo -e "  ${BLUE}->${RESET} $1"
+  echo -e "  ${GREEN}\033[1m▶ $1\033[0m${RESET}"
 }
 
 ui_info() {
