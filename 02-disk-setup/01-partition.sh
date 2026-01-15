@@ -28,12 +28,27 @@ lsblk "$DISK" -o NAME,SIZE,FSTYPE,MOUNTPOINT
 # -----------------------------
 # EFI Partition Selection
 # -----------------------------
-read -rp "Enter EFI partition to use (leave empty to create new): " EFI_PART
-if [[ -z "$EFI_PART" ]]; then
+# Detect existing EFI partitions (FAT32, empty mountpoint)
+mapfile -t EFI_CANDIDATES < <(lsblk "$DISK" -o NAME,FSTYPE,MOUNTPOINT | awk '$2=="vfat" && $3=="" {print "/dev/"$1}')
+
+if [ ${#EFI_CANDIDATES[@]} -gt 0 ]; then
+    ui_step "Existing EFI partitions found:"
+    for i in "${!EFI_CANDIDATES[@]}"; do
+        echo "  [$i] ${EFI_CANDIDATES[$i]}"
+    done
+    read -rp "Select EFI partition to use (leave empty to create new if free space exists): " EFI_IDX
+    if [[ -n "$EFI_IDX" && "$EFI_IDX" =~ ^[0-9]+$ && "$EFI_IDX" -lt "${#EFI_CANDIDATES[@]}" ]]; then
+        EFI_PART="${EFI_CANDIDATES[$EFI_IDX]}"
+        ui_info "Using existing EFI: $EFI_PART"
+    fi
+fi
+
+# If no EFI selected yet, try to create new
+if [[ -z "${EFI_PART:-}" ]]; then
     # Detect first free space
     FREE_START=$(parted "$DISK" print free | awk '/Free Space/ {print $2}' | head -n 1)
     if [[ -z "$FREE_START" ]]; then
-        ui_error "No free space available to create EFI partition! Please select an existing EFI partition."
+        ui_error "No free space available to create EFI partition! Please select an existing one."
         exit 1
     fi
 
@@ -43,8 +58,8 @@ if [[ -z "$EFI_PART" ]]; then
     ui_step "Creating EFI partition..."
     parted "$DISK" --script mkpart ESP fat32 "$FREE_START" "$EFI_SIZE"
     parted "$DISK" --script set 1 boot on
-    # Set EFI_PART variable to newly created partition
     EFI_PART="${DISK}1"
+    ui_info "Created EFI partition: $EFI_PART"
 fi
 
 # -----------------------------
@@ -63,9 +78,9 @@ USE_LUKS="${USE_LUKS:-N}"
 # Summary
 # -----------------------------
 ui_banner "Summary of selections"
-ui_step "Disk       : $DISK"
-ui_step "EFI Part   : $EFI_PART"
-ui_step "Root Part  : $ROOT_PART"
+ui_step "Disk        : $DISK"
+ui_step "EFI Part    : $EFI_PART"
+ui_step "Root Part   : $ROOT_PART"
 ui_step "Encrypt root: $USE_LUKS"
 
 # -----------------------------
