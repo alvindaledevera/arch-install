@@ -53,6 +53,7 @@ if [[ "$FS_TYPE" == "btrfs" ]]; then
     btrfs subvolume create /mnt/@snapshots
     umount /mnt
 else
+    # EXT4 formatting
     ui_info "Formatting $TARGET_DEV as Ext4..."
     mkfs.ext4 -F "$TARGET_DEV"
 fi

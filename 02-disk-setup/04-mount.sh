@@ -4,36 +4,55 @@ set -euo pipefail
 ui_banner "Mounting Filesystems"
 
 # -------------------------------------------------
-# Determine device
+# Determine target device
 # -------------------------------------------------
-if [[ "$FS_TYPE" == "btrfs" ]]; then
+if [[ -n "${USE_LUKS:-}" ]] && [[ "${USE_LUKS}" =~ ^[Yy]$ ]]; then
+    TARGET_DEV="/dev/mapper/cryptroot"
+else
+    TARGET_DEV="$ROOT_PART"
+fi
+
+ui_info "Target device: $TARGET_DEV"
+
+# -------------------------------------------------
+# Unmount any previous mounts
+# -------------------------------------------------
+umount -R /mnt 2>/dev/null || true
+rm -rf /mnt/* 2>/dev/null || true
+mkdir -p /mnt /mnt/home /mnt/.snapshots /mnt/boot
+
+# -------------------------------------------------
+# Mount filesystem based on type
+# -------------------------------------------------
+if [[ "${FS_TYPE:-btrfs}" == "btrfs" ]]; then
+    ui_info "Mounting Btrfs subvolumes..."
+
     BTRFS_OPTS="rw,noatime,compress=zstd:3,ssd,discard=async,space_cache=v2,commit=120"
 
-    ui_info "Mounting root subvolume @ ..."
-    mount -o "$BTRFS_OPTS,subvol=@" "$TARGET_DEV" /mnt
+    # Mount root subvolume
+    mount -o "${BTRFS_OPTS},subvol=@" "$TARGET_DEV" /mnt
 
-    ui_info "Mounting home subvolume @home ..."
-    mount -o "$BTRFS_OPTS,subvol=@home" "$TARGET_DEV" /mnt/home
-
-    ui_info "Mounting snapshots subvolume @snapshots ..."
-    mount -o "$BTRFS_OPTS,subvol=@snapshots" "$TARGET_DEV" /mnt/.snapshots
-else
-    ui_info "Mounting Ext4 root ..."
-    mount "$TARGET_DEV" /mnt
+    # Create subvolume mount points
     mkdir -p /mnt/home /mnt/.snapshots
+
+    # Mount home and snapshots
+    mount -o "${BTRFS_OPTS},subvol=@home" "$TARGET_DEV" /mnt/home
+    mount -o "${BTRFS_OPTS},subvol=@snapshots" "$TARGET_DEV" /mnt/.snapshots
+else
+    ui_info "Mounting Ext4 root..."
+    mount "$TARGET_DEV" /mnt
 fi
 
 # -------------------------------------------------
-# Mount EFI
+# Mount EFI partition
 # -------------------------------------------------
-ui_info "Mounting EFI partition $EFI_PART ..."
+mkdir -p /mnt/boot
 mount "$EFI_PART" /mnt/boot
 
 ui_success "All filesystems mounted successfully"
 
 # -------------------------------------------------
-# Export mounts
+# Export for next steps
 # -------------------------------------------------
-export MOUNT_ROOT="/mnt"
-export MOUNT_BOOT="/mnt/boot"
-export CRYPT_ROOT="$TARGET_DEV"
+export TARGET_DEV
+export FS_TYPE
