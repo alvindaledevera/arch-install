@@ -19,3 +19,4 @@ if [[ "${AUTO_CONFIRM}" != "true" ]]; then
 fi
 
 ui_success "Confirmation accepted"
+
