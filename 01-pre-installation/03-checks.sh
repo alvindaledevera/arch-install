@@ -15,12 +15,6 @@ if [[ ! -d /sys/firmware/efi ]]; then
   exit 1
 fi
 
-# Disk exists
-if ! disk_exists "$DISK"; then
-  ui_error "Disk not found: $DISK"
-  exit 1
-fi
-
 # Internet check
 ui_step "Checking internet connectivity"
 if ! ping -c 1 ping.archlinux.org &>/dev/null; then
@@ -29,7 +23,7 @@ if ! ping -c 1 ping.archlinux.org &>/dev/null; then
 fi
 
 # Vars sanity
-for v in DISK HOSTNAME TIMEZONE LOCALE USERNAME; do
+for v in HOSTNAME LOCALE USERNAME; do
   if [[ -z "${!v}" ]]; then
     ui_error "Variable not set: $v"
     exit 1
