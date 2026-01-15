@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Provide default for optional variable
+AUTO_CONFIRM="${AUTO_CONFIRM:-false}"
+
 ui_banner "Pre-installation: Confirmation"
 
 ui_warn "This will ERASE disk: $DISK"
