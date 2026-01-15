@@ -15,6 +15,9 @@ DISK="/dev/nvme0n1"
 EFI_PART="${DISK}p1"
 EFI_SIZE="512M"
 
+# Encryption
+LUKS_ENABLE=true   # true = encrypt root, false = no encryption
+
 # LUKS encrypted root partition
 ROOT_PART="${DISK}p2"
 LUKS_NAME="cryptroot"

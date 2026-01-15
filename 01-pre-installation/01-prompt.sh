@@ -8,13 +8,6 @@ AUTO_CONFIRM="${AUTO_CONFIRM:-false}"
 FS_TYPE="${FS_TYPE:-btrfs}"
 FORCE_DISK_PROMPT="${FORCE_DISK_PROMPT:-true}"
 
-# -------------------------------------------------
-# Detect VM
-# -------------------------------------------------
-VM_DETECTED=false
-if grep -qi virtual /sys/class/dmi/id/product_name 2>/dev/null; then
-    VM_DETECTED=true
-fi
 
 # -------------------------------------------------
 # Detect available disks
@@ -57,14 +50,6 @@ else
 fi
 
 # -------------------------------------------------
-# VM adjustments
-# -------------------------------------------------
-if [[ "$VM_DETECTED" == "true" ]]; then
-    ui_warn "Virtual machine detected"
-    LUKS_ENABLE=false
-fi
-
-# -------------------------------------------------
 # Final confirmation
 # -------------------------------------------------
 ui_banner "Pre-installation: Confirmation"
@@ -78,7 +63,6 @@ ui_step "Hostname   : $HOSTNAME"
 ui_step "Timezone   : $TIMEZONE"
 ui_step "Locale     : $LOCALE"
 ui_step "User       : $USERNAME"
-ui_step "VM         : $VM_DETECTED"
 
 if [[ "$AUTO_CONFIRM" != "true" ]]; then
     read -rp "Continue installation? [y/N]: " ans
