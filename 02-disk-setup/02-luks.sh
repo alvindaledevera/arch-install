@@ -1,44 +1,71 @@
 #!/usr/bin/env bash
-set -e
+set -euo pipefail
 
-echo "🔒 Formatting LUKS on $ARCH_PART (all data will be erased)"
+# ===================================================
+# 02-disk-setup/02-luks.sh
+# Optional LUKS encryption for root partition
+# ===================================================
 
-# Ensure no mount
-umount -R /mnt 2>/dev/null || true
+ui_banner "Disk Encryption (LUKS)"
 
-# Close existing mapping if any
-cryptsetup close cryptroot 2>/dev/null || true
+# -------------------------------------------------
+# Skip if user chose no encryption
+# -------------------------------------------------
+if [[ "${USE_LUKS:-N}" =~ ^[Nn]$ ]]; then
+    ui_info "LUKS encryption skipped"
+    export CRYPT_ROOT=""
+    return 0 2>/dev/null || exit 0
+fi
 
-# Function to safely format LUKS without exiting on mismatch
-format_luks() {
-    while true; do
-        if cryptsetup luksFormat "$ARCH_PART"; then
-            break
-        else
-            echo "⚠️ Passwords do not match or invalid. Please try again."
-        fi
-    done
+# -------------------------------------------------
+# Safety checks
+# -------------------------------------------------
+[[ -n "${ROOT_PART:-}" ]] || {
+    ui_error "ROOT_PART is not set"
+    exit 1
 }
 
-# Format LUKS
-format_luks
+if blkid "$ROOT_PART" | grep -qi crypto_LUKS; then
+    ui_warn "Partition already encrypted: $ROOT_PART"
+else
+    ui_warn "ROOT partition WILL BE ERASED"
+    ui_step "Partition: $ROOT_PART"
 
-# Open LUKS
-echo "🔒 Opening LUKS on $ARCH_PART"
-cryptsetup luksOpen "$ARCH_PART" cryptroot
+    read -rp "Type ENCRYPT to continue: " CONFIRM
+    [[ "$CONFIRM" == "ENCRYPT" ]] || {
+        ui_error "Encryption aborted"
+        exit 1
+    }
 
-# Format Btrfs filesystem
-echo "✨ Creating Btrfs filesystem"
-mkfs.btrfs -f /dev/mapper/cryptroot
+    ui_info "Encrypting $ROOT_PART with LUKS2..."
+    cryptsetup luksFormat "$ROOT_PART"
+fi
 
-# Mount temporarily
-mount /dev/mapper/cryptroot /mnt
+# -------------------------------------------------
+# Open LUKS container
+# -------------------------------------------------
+CRYPT_NAME="cryptroot"
 
-# Create subvolumes
-echo "✨ Creating Btrfs subvolumes"
-btrfs subvolume create /mnt/@
-btrfs subvolume create /mnt/@home
-btrfs subvolume create /mnt/@snapshots
+if cryptsetup status "$CRYPT_NAME" &>/dev/null; then
+    ui_info "LUKS container already opened"
+else
+    ui_info "Opening LUKS container..."
+    cryptsetup open "$ROOT_PART" "$CRYPT_NAME"
+fi
 
-# Unmount
-umount /mnt
+CRYPT_ROOT="/dev/mapper/$CRYPT_NAME"
+
+# -------------------------------------------------
+# Verify
+# -------------------------------------------------
+[[ -b "$CRYPT_ROOT" ]] || {
+    ui_error "Failed to open LUKS device"
+    exit 1
+}
+
+ui_success "LUKS root ready: $CRYPT_ROOT"
+
+# -------------------------------------------------
+# Export for filesystem step
+# -------------------------------------------------
+export CRYPT_ROOT
