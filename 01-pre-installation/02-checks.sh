@@ -23,7 +23,7 @@ fi
 
 # Internet check
 ui_step "Checking internet connectivity"
-if ! ping -c 1 archlinux.org &>/dev/null; then
+if ! ping -c 1 ping.archlinux.org &>/dev/null; then
   ui_error "No internet connection"
   exit 1
 fi
