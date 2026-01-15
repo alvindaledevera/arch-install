@@ -1,53 +1,46 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# ===================================================
-# 02-disk-setup/01-partition.sh
-# Partition the target disk
-# Supports UEFI, GPT, and multiple disks (nvme, ssd, hdd)
-# ===================================================
+ui_banner "Disk Partitioning (Manual)"
 
-ui_banner "Disk Partitioning"
+# List disks
+ui_step "Available disks:"
+lsblk -d -o NAME,SIZE,TYPE | grep disk
 
-# Safety check
-if [[ -z "${DISK:-}" ]]; then
-    ui_error "DISK variable not set! Please set in vars.conf"
-    exit 1
+read -rp "Enter disk to use (e.g. /dev/nvme0n1 or /dev/sda): " DISK
+[[ -b "$DISK" ]] || { ui_error "Disk not found"; exit 1; }
+
+# List partitions
+ui_step "Available partitions on $DISK:"
+lsblk "$DISK" -o NAME,SIZE,FSTYPE,MOUNTPOINT
+
+read -rp "Enter EFI partition to use (leave empty to create new): " EFI_PART
+if [[ -z "$EFI_PART" ]]; then
+    read -rp "Enter size for new EFI partition [1G]: " EFI_SIZE
+    EFI_SIZE="${EFI_SIZE:-1G}"
+    ui_step "Creating EFI partition..."
+    parted "$DISK" --script mkpart ESP fat32 1MiB "$EFI_SIZE"
+    parted "$DISK" --script set 1 boot on
+    EFI_PART="${DISK}1"
 fi
 
-if [[ ! -b "$DISK" ]]; then
-    ui_error "Disk not found: $DISK"
-    exit 1
-fi
+read -rp "Enter root partition to install Arch (will be formatted!): " ROOT_PART
+[[ -b "$ROOT_PART" ]] || { ui_error "Root partition not found"; exit 1; }
 
-ui_info "Target disk: $DISK"
+# Ask about LUKS
+read -rp "Encrypt root partition with LUKS? [y/N]: " USE_LUKS
+USE_LUKS=${USE_LUKS:-N}
 
-# Warn user
-ui_warn "THIS WILL ERASE ALL DATA ON $DISK"
+# Summary
+ui_banner "Summary of selections"
+ui_step "Disk       : $DISK"
+ui_step "EFI Part   : $EFI_PART"
+ui_step "Root Part  : $ROOT_PART"
+ui_step "Encrypt root: $USE_LUKS"
+
 if [[ "${AUTO_CONFIRM:-false}" != "true" ]]; then
     read -rp "Type YES to continue: " CONFIRM
     [[ "$CONFIRM" == "YES" ]] || exit 1
 fi
 
-# -----------------------------
-# Create GPT + EFI + root
-# -----------------------------
-ui_step "Creating GPT partition table..."
-parted "$DISK" --script mklabel gpt
-
-# EFI Partition
-ui_step "Creating EFI partition (${EFI_SIZE})..."
-parted "$DISK" --script mkpart ESP fat32 1MiB "${EFI_SIZE}"
-parted "$DISK" --script set 1 boot on
-
-# Root Partition (rest of disk)
-ui_step "Creating root partition..."
-parted "$DISK" --script mkpart primary  "${EFI_SIZE}" 100%
-
-# -----------------------------
-# Format partitions (placeholder)
-# -----------------------------
-ui_step "Partitions created successfully:"
-lsblk "$DISK" -o NAME,SIZE,FSTYPE,MOUNTPOINT
-
-ui_success "Disk partitioning complete"
+ui_success "Partition selection confirmed"
