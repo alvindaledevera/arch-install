@@ -53,12 +53,6 @@ fi
 # Final confirmation
 # -------------------------------------------------
 ui_banner "Pre-installation: Confirmation"
-
-ui_warn "THIS WILL ERASE THE FOLLOWING DISK"
-ui_step "Disk       : $DISK"
-ui_step "EFI Part   : $EFI_PART"
-ui_step "Root Part  : $ROOT_PART"
-ui_step "Filesystem : $FS_TYPE"
 ui_step "Hostname   : $HOSTNAME"
 ui_step "Timezone   : $TIMEZONE"
 ui_step "Locale     : $LOCALE"
