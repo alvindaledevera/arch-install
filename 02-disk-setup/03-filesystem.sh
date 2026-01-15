@@ -8,22 +8,33 @@ ui_banner "Filesystem Setup"
 # -------------------------------------------------
 if [[ -n "${USE_LUKS:-}" ]] && [[ "${USE_LUKS}" =~ ^[Yy]$ ]]; then
     TARGET_DEV="/dev/mapper/cryptroot"
+    RAW_DEV="$ROOT_PART"
 else
     TARGET_DEV="$ROOT_PART"
+    RAW_DEV="$ROOT_PART"
 fi
 
 ui_info "Target device: $TARGET_DEV"
 
 # -------------------------------------------------
-# Unmount previous mounts & prepare directories
+# Unmount previous mounts and close LUKS if needed
 # -------------------------------------------------
 umount -R /mnt 2>/dev/null || true
+rm -rf /mnt/* 2>/dev/null || true
 mkdir -p /mnt /mnt/home /mnt/.snapshots /mnt/boot
 
+# Close LUKS if open to allow Ext4 formatting
+if [[ -n "${USE_LUKS:-}" ]] && [[ "$USE_LUKS" =~ ^[Yy]$ ]]; then
+    if cryptsetup status cryptroot &>/dev/null; then
+        ui_info "Closing LUKS container temporarily for formatting..."
+        cryptsetup close cryptroot
+    fi
+fi
+
 # -------------------------------------------------
-# Select filesystem (default Btrfs)
+# Select filesystem
 # -------------------------------------------------
-FS_TYPE="${FS_TYPE:-btrfs}"
+FS_TYPE="${FS_TYPE:-btrfs}"  # default Btrfs if not set
 
 ui_section "Filesystem selection"
 echo "Available filesystems:"
@@ -42,6 +53,11 @@ ui_info "Selected filesystem: $FS_TYPE"
 # Format filesystem
 # -------------------------------------------------
 if [[ "$FS_TYPE" == "btrfs" ]]; then
+    # Open LUKS again if needed
+    if [[ -n "${USE_LUKS:-}" ]] && [[ "$USE_LUKS" =~ ^[Yy]$ ]]; then
+        cryptsetup open "$RAW_DEV" cryptroot
+    fi
+
     ui_info "Formatting $TARGET_DEV as Btrfs..."
     mkfs.btrfs -f "$TARGET_DEV"
 
@@ -52,10 +68,16 @@ if [[ "$FS_TYPE" == "btrfs" ]]; then
     btrfs subvolume create /mnt/@home
     btrfs subvolume create /mnt/@snapshots
     umount /mnt
+
 else
-    # EXT4 formatting
     ui_info "Formatting $TARGET_DEV as Ext4..."
-    mkfs.ext4 -F "$TARGET_DEV"
+    mkfs.ext4 -F "$RAW_DEV"
+
+    # If LUKS, open it again after formatting
+    if [[ -n "${USE_LUKS:-}" ]] && [[ "$USE_LUKS" =~ ^[Yy]$ ]]; then
+        cryptsetup open "$RAW_DEV" cryptroot
+        TARGET_DEV="/dev/mapper/cryptroot"
+    fi
 fi
 
 ui_success "Root filesystem formatted"
