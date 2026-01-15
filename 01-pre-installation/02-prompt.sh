@@ -6,58 +6,25 @@ set -euo pipefail
 # -------------------------------------------------
 AUTO_CONFIRM="${AUTO_CONFIRM:-false}"
 FS_TYPE="${FS_TYPE:-btrfs}"
-FORCE_DISK_PROMPT="${FORCE_DISK_PROMPT:-true}"
-
 
 # -------------------------------------------------
-# Detect available disks
+# Pre-installation confirmation (NON-DESTRUCTIVE)
 # -------------------------------------------------
-mapfile -t AVAILABLE_DISKS < <(lsblk -dpno NAME,TYPE | awk '$2=="disk"{print $1}')
+ui_banner "Pre-installation: Confirmation"
 
-if [[ ${#AVAILABLE_DISKS[@]} -eq 0 ]]; then
-    ui_error "No disks detected"
-    exit 1
-fi
+ui_step "Hostname   : ${HOSTNAME:-<not set>}"
+ui_step "Locale     : ${LOCALE:-<not set>}"
+ui_step "Keymap     : ${KEYMAP:-<not set>}"
+ui_step "Timezone   : ${TIMEZONE:-<auto>}"
+ui_step "User       : ${USERNAME:-<not set>}"
+ui_step "Filesystem : $FS_TYPE"
 
-# -------------------------------------------------
-# Disk selection (ALWAYS PROMPT)
-# -------------------------------------------------
-ui_section "Disk selection"
-
-for i in "${!AVAILABLE_DISKS[@]}"; do
-    size=$(lsblk -dn -o SIZE "${AVAILABLE_DISKS[$i]}")
-    echo "  [$i] ${AVAILABLE_DISKS[$i]} ($size)"
-done
-
-read -rp "Select disk to install on: " disk_idx
-
-if [[ -z "${disk_idx}" || ! "${disk_idx}" =~ ^[0-9]+$ || -z "${AVAILABLE_DISKS[$disk_idx]:-}" ]]; then
-    ui_error "Invalid disk selection"
-    exit 1
-fi
-
-DISK="${AVAILABLE_DISKS[$disk_idx]}"
-
-# -------------------------------------------------
-# Partition naming (NVMe vs SATA/VM)
-# -------------------------------------------------
-if [[ "$DISK" =~ nvme ]]; then
-    EFI_PART="${DISK}p1"
-    ROOT_PART="${DISK}p2"
-else
-    EFI_PART="${DISK}1"
-    ROOT_PART="${DISK}2"
-fi
+echo
+ui_info "Disk and partitioning were already handled in the previous step."
 
 # -------------------------------------------------
 # Final confirmation
 # -------------------------------------------------
-ui_banner "Pre-installation: Confirmation"
-ui_step "Hostname   : $HOSTNAME"
-ui_step "Timezone   : $TIMEZONE"
-ui_step "Locale     : $LOCALE"
-ui_step "User       : $USERNAME"
-
 if [[ "$AUTO_CONFIRM" != "true" ]]; then
     read -rp "Continue installation? [y/N]: " ans
     [[ "$ans" =~ ^[Yy]$ ]] || {
