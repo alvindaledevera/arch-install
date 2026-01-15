@@ -26,15 +26,34 @@ fi
 }
 
 # -------------------------------------------------
-# Always (re)format with LUKS if enabled
+# Handle existing LUKS / mounted partition
 # -------------------------------------------------
 if blkid "$ROOT_PART" | grep -qi crypto_LUKS; then
     ui_warn "Existing LUKS detected on $ROOT_PART"
     ui_warn "Recreating encrypted container (NO confirmation)"
+
+    # Close if open
+    if cryptsetup status cryptroot &>/dev/null; then
+        ui_warn "Closing existing LUKS container..."
+        cryptsetup close cryptroot || true
+    fi
+
+    # Unmount if mounted
+    if mount | grep -q "$ROOT_PART"; then
+        ui_warn "Unmounting $ROOT_PART..."
+        umount -R "$ROOT_PART" || true
+    fi
+
+    # Wipe LUKS header to prevent conflicts
+    ui_info "Wiping existing LUKS header..."
+    cryptsetup luksErase "$ROOT_PART" 2>/dev/null || true
 else
     ui_warn "Encrypting ROOT partition (WILL ERASE DATA)"
 fi
 
+# -------------------------------------------------
+# Proceed with encryption
+# -------------------------------------------------
 ui_step "Target partition: $ROOT_PART"
 ui_info "You will be prompted for LUKS password"
 
