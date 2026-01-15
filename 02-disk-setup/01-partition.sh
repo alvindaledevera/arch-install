@@ -125,10 +125,17 @@ read -rp "Select ROOT partition: " ROOT_IDX
 ROOT_PART="${ROOT_CANDIDATES[$ROOT_IDX]}"
 
 # -------------------------------------------------
-# Optional encryption
+# Optional encryption (default = YES)
 # -------------------------------------------------
-read -rp "Encrypt ROOT with LUKS? [y/N]: " USE_LUKS
-USE_LUKS="${USE_LUKS:-N}"
+read -rp "Encrypt ROOT with LUKS? [Y/n]: " USE_LUKS
+USE_LUKS="${USE_LUKS:-Y}"
+
+if [[ "$USE_LUKS" =~ ^[Yy]$ ]]; then
+    USE_LUKS="yes"
+else
+    USE_LUKS="no"
+fi
+
 
 # -------------------------------------------------
 # Summary
