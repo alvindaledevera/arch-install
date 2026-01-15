@@ -25,33 +25,29 @@ fi
     exit 1
 }
 
+# -------------------------------------------------
+# Always (re)format with LUKS if enabled
+# -------------------------------------------------
 if blkid "$ROOT_PART" | grep -qi crypto_LUKS; then
-    ui_warn "Partition already encrypted: $ROOT_PART"
+    ui_warn "Existing LUKS detected on $ROOT_PART"
+    ui_warn "Recreating encrypted container (NO confirmation)"
 else
-    ui_warn "ROOT partition WILL BE ERASED"
-    ui_step "Partition: $ROOT_PART"
-
-    read -rp "Type ENCRYPT to continue: " CONFIRM
-    [[ "$CONFIRM" == "ENCRYPT" ]] || {
-        ui_error "Encryption aborted"
-        exit 1
-    }
-
-    ui_info "Encrypting $ROOT_PART with LUKS2..."
-    cryptsetup luksFormat "$ROOT_PART"
+    ui_warn "Encrypting ROOT partition (WILL ERASE DATA)"
 fi
+
+ui_step "Target partition: $ROOT_PART"
+ui_info "You will be prompted for LUKS password"
+
+# Force reformat (-q = quiet, --type luks2 explicit)
+cryptsetup luksFormat --type luks2 "$ROOT_PART"
 
 # -------------------------------------------------
 # Open LUKS container
 # -------------------------------------------------
 CRYPT_NAME="cryptroot"
 
-if cryptsetup status "$CRYPT_NAME" &>/dev/null; then
-    ui_info "LUKS container already opened"
-else
-    ui_info "Opening LUKS container..."
-    cryptsetup open "$ROOT_PART" "$CRYPT_NAME"
-fi
+ui_info "Opening LUKS container..."
+cryptsetup open "$ROOT_PART" "$CRYPT_NAME"
 
 CRYPT_ROOT="/dev/mapper/$CRYPT_NAME"
 
