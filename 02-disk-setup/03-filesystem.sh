@@ -15,28 +15,26 @@ fi
 ui_info "Target device: $TARGET_DEV"
 
 # -------------------------------------------------
-# Unmount previous mounts
+# Unmount previous mounts & prepare directories
 # -------------------------------------------------
 umount -R /mnt 2>/dev/null || true
 mkdir -p /mnt /mnt/home /mnt/.snapshots /mnt/boot
 
 # -------------------------------------------------
-# Select filesystem
+# Select filesystem (default Btrfs)
 # -------------------------------------------------
-FS_TYPE="${FS_TYPE:-btrfs}"  # default Btrfs if not set
+FS_TYPE="${FS_TYPE:-btrfs}"
 
 ui_section "Filesystem selection"
 echo "Available filesystems:"
 echo "  [1] btrfs"
 echo "  [2] ext4"
 
-if [[ "$FS_TYPE" != "btrfs" && "$FS_TYPE" != "ext4" ]]; then
-    read -rp "Choose filesystem (1=btrfs, 2=ext4) [default 1]: " fs_choice
-    case "$fs_choice" in
-        2) FS_TYPE="ext4" ;;
-        *) FS_TYPE="btrfs" ;;
-    esac
-fi
+read -rp "Choose filesystem (1=btrfs, 2=ext4) [default 1]: " fs_choice
+case "$fs_choice" in
+    2) FS_TYPE="ext4" ;;
+    *) FS_TYPE="btrfs" ;;
+esac
 
 ui_info "Selected filesystem: $FS_TYPE"
 
