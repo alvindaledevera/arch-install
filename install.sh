@@ -38,7 +38,8 @@ run_dir() {
   for script in "${ROOT_DIR}/${dir}"/*.sh; do
     [[ -x "$script" ]] || chmod +x "$script"
     ui_step "$(basename "$script")"
-    "$script"
+    # Source instead of execute
+    source "$script"
   done
 }
 
@@ -50,7 +51,8 @@ run_chroot_dir() {
   for script in "${ROOT_DIR}/${dir}"/*.sh; do
     [[ -x "$script" ]] || chmod +x "$script"
     ui_step "$(basename "$script")"
-    run_in_chroot "/bin/bash" < "$script"
+    # Use run_in_chroot (already defined in lib/chroot.sh)
+    run_in_chroot /bin/bash -c "source /root/arch-install/${dir}/$(basename "$script")"
   done
 }
 
