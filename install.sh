@@ -1,14 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# -----------------------------
-# Ensure git is installed
-# -----------------------------
-if ! command -v git &>/dev/null; then
-    echo "Git not found, installing..."
-    nocorrect pacman -Sy --noconfirm git
-fi
-
 # ==================================================
 # Arch Linux Install Script (Runner)
 # ==================================================
