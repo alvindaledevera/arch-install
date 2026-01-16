@@ -15,21 +15,37 @@ if ! pacman -Qi "$KERNEL_PKG" &>/dev/null; then
 fi
 
 # -------------------------------------------------
-# Configure mkinitcpio
+# Determine mkinitcpio hooks
 # -------------------------------------------------
 MKINITCPIO_CONF="/etc/mkinitcpio.conf"
 
 ui_info "Backing up mkinitcpio.conf..."
 cp "$MKINITCPIO_CONF" "${MKINITCPIO_CONF}.bak"
 
-ui_info "Updating HOOKS for LUKS/BTRFS setup..."
-# Minimal recommended for encrypted Btrfs root
-sed -i 's/^HOOKS=.*/HOOKS=(base udev autodetect modconf block encrypt filesystems keyboard fsck)/' "$MKINITCPIO_CONF"
+# Build hook array
+HOOKS=(base udev autodetect modconf block filesystems keyboard fsck)
+
+# Add 'encrypt' if LUKS is enabled
+if [[ "${USE_LUKS:-Y}" =~ ^[Yy] ]]; then
+    ui_info "Encryption detected: adding 'encrypt' hook"
+    # Insert 'encrypt' **after block**
+    HOOKS=(base udev autodetect modconf block encrypt filesystems keyboard fsck)
+fi
+
+# Add 'btrfs' hook if root filesystem is Btrfs
+if [[ "${FS_TYPE:-btrfs}" == "btrfs" ]]; then
+    ui_info "Btrfs root detected: adding 'btrfs' hook"
+    HOOKS+=(btrfs)
+fi
+
+# Write hooks to mkinitcpio.conf
+ui_info "Updating HOOKS in $MKINITCPIO_CONF"
+sed -i "s|^HOOKS=.*|HOOKS=(${HOOKS[*]})|" "$MKINITCPIO_CONF"
 
 # -------------------------------------------------
 # Regenerate initramfs
 # -------------------------------------------------
-ui_info "Regenerating initramfs..."
+ui_info "Regenerating initramfs for kernel $KERNEL_PKG..."
 mkinitcpio -P
 
 ui_success "Initramfs regenerated successfully"
