@@ -3,11 +3,28 @@ set -euo pipefail
 
 ui_banner "Timezone Configuration"
 
-ui_section "Timezone selection"
-ui_info "Default timezone: $TIMEZONE"
+# -------------------------------------------------
+# Auto-detect timezone if not set
+# -------------------------------------------------
+if [[ -z "${TIMEZONE:-}" ]]; then
+    ui_step "Detecting timezone..."
+    if curl -fsSL https://ipapi.co/timezone >/dev/null 2>&1; then
+        TIMEZONE="$(curl -fsSL https://ipapi.co/timezone)"
+        ui_info "Detected timezone: $TIMEZONE"
+    else
+        TIMEZONE="UTC"
+        ui_warn "Could not detect timezone automatically. Defaulting to UTC."
+    fi
+fi
 
-read -rp "Enter timezone (e.g. Asia/Manila) [default: $TIMEZONE]: " TIMEZONE
-TIMEZONE="${TIMEZONE}"
+# -------------------------------------------------
+# Ask user to confirm or override
+# -------------------------------------------------
+ui_section "Timezone selection"
+read -rp "Enter timezone (e.g., Asia/Manila) [default: $TIMEZONE]: " INPUT_TZ
+if [[ -n "$INPUT_TZ" ]]; then
+    TIMEZONE="$INPUT_TZ"
+fi
 
 ZONEINFO="/usr/share/zoneinfo/$TIMEZONE"
 
