@@ -26,12 +26,18 @@ EOF
 # -----------------------------
 # Network service setup
 # -----------------------------
-# Enable systemd-networkd and systemd-resolved
 ui_info "Enabling systemd-networkd and systemd-resolved..."
 systemctl enable systemd-networkd
 systemctl enable systemd-resolved
 
-# Link resolv.conf
-ln -sf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
+# -----------------------------
+# Link /etc/resolv.conf safely
+# -----------------------------
+if [[ ! -L /etc/resolv.conf ]] || [[ "$(readlink /etc/resolv.conf)" != "/run/systemd/resolve/stub-resolv.conf" ]]; then
+    ui_info "Linking /etc/resolv.conf to systemd stub..."
+    ln -sf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
+else
+    ui_info "/etc/resolv.conf already correctly linked"
+fi
 
 ui_success "Network configured successfully"
