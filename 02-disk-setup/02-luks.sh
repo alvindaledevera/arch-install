@@ -6,8 +6,9 @@ ui_banner "Disk Encryption (LUKS)"
 [[ -n "${ROOT_PART:-}" ]] || { ui_error "ROOT_PART is not set"; exit 1; }
 
 # -------------------------------------------------
-# Default encryption = YES
+# Ask user if they want LUKS encryption
 # -------------------------------------------------
+read -rp "Encrypt root partition with LUKS? [Y/n]: " USE_LUKS
 USE_LUKS="${USE_LUKS:-Y}"
 
 if [[ ! "$USE_LUKS" =~ ^[Yy] ]]; then
@@ -35,7 +36,7 @@ if blkid "$ROOT_PART" | grep -qi crypto_LUKS; then
 fi
 
 ui_step "Target partition: $ROOT_PART"
-ui_info "You will be prompted for LUKS password"
+ui_info "You will be prompted for LUKS passphrase"
 
 # -------------------------------------------------
 # LUKS format (retry on password mismatch)
