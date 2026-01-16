@@ -24,7 +24,7 @@ cat > /etc/hosts <<EOF
 EOF
 
 # -----------------------------
-# Network service setup
+# Enable networking services
 # -----------------------------
 ui_info "Enabling systemd-networkd and systemd-resolved..."
 systemctl enable systemd-networkd
@@ -39,5 +39,16 @@ if [[ ! -L /etc/resolv.conf ]] || [[ "$(readlink /etc/resolv.conf)" != "/run/sys
 else
     ui_info "/etc/resolv.conf already correctly linked"
 fi
+
+# -----------------------------
+# Basic DHCP config for wired interfaces
+# -----------------------------
+cat <<EOF > /etc/systemd/network/20-wired.network
+[Match]
+Name=en*
+
+[Network]
+DHCP=yes
+EOF
 
 ui_success "Network configured successfully"
