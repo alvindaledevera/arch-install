@@ -3,66 +3,49 @@ set -euo pipefail
 
 ui_banner "Initramfs Configuration"
 
-# -------------------------------------------------
-# Default kernel
-# -------------------------------------------------
-KERNEL_PKG="${KERNEL_PKG:-linux}"
-
-ui_info "Checking installed kernel: $KERNEL_PKG"
-if ! pacman -Qi "$KERNEL_PKG" &>/dev/null; then
-    ui_error "Kernel package $KERNEL_PKG not installed"
-    exit 1
-fi
-
-# -------------------------------------------------
-# Determine mkinitcpio hooks
-# -------------------------------------------------
 MKINITCPIO_CONF="/etc/mkinitcpio.conf"
 
-ui_info "Backing up mkinitcpio.conf..."
+# -------------------------------------------------
+# Backup
+# -------------------------------------------------
+ui_info "Backing up mkinitcpio.conf"
 cp "$MKINITCPIO_CONF" "${MKINITCPIO_CONF}.bak"
 
-# -----------------------------
-# Default hooks
-# -----------------------------
-HOOKS=(base udev autodetect modconf block filesystems keyboard fsck)
+# -------------------------------------------------
+# MODULES
+# -------------------------------------------------
+MODULES=()
 
-# -----------------------------
-# Add 'encrypt' hook if LUKS is enabled
-# -----------------------------
-if [[ "${USE_LUKS:-N}" =~ ^[Yy] ]]; then
-    ui_info "LUKS detected: adding 'encrypt' hook"
-    # Insert 'encrypt' after 'block'
-    # Find index of 'block'
-    for i in "${!HOOKS[@]}"; do
-        if [[ "${HOOKS[$i]}" == "block" ]]; then
-            INSERT_INDEX=$((i+1))
-            break
-        fi
-    done
-    # Insert encrypt
-    HOOKS=("${HOOKS[@]:0:$INSERT_INDEX}" encrypt "${HOOKS[@]:$INSERT_INDEX}")
+# Add btrfs module if needed
+if [[ "${FS_TYPE:-}" == "btrfs" ]]; then
+    MODULES+=(btrfs)
 fi
 
-# -----------------------------
-# Add 'btrfs' hook if root filesystem is Btrfs
-# -----------------------------
-if [[ "${FS_TYPE:-btrfs}" == "btrfs" ]]; then
-    ui_info "Btrfs root detected: adding 'btrfs' hook"
-    HOOKS+=(btrfs)
+# Keyboard module (safe)
+MODULES+=(atkbd)
+
+ui_info "Setting MODULES: ${MODULES[*]}"
+sed -i "s/^MODULES=.*/MODULES=(${MODULES[*]})/" "$MKINITCPIO_CONF"
+
+# -------------------------------------------------
+# HOOKS (systemd-based)
+# -------------------------------------------------
+HOOKS=(base systemd autodetect keyboard sd-vconsole modconf block)
+
+if [[ "${USE_LUKS:-N}" =~ ^[Yy]$ ]]; then
+    ui_info "LUKS enabled → adding sd-encrypt hook"
+    HOOKS+=(sd-encrypt)
 fi
 
-# -----------------------------
-# Update mkinitcpio.conf
-# -----------------------------
-HOOKS_STRING="${HOOKS[*]}"
-ui_info "Updating HOOKS in $MKINITCPIO_CONF"
-sed -i "s|^HOOKS=.*|HOOKS=(${HOOKS_STRING})|" "$MKINITCPIO_CONF"
+HOOKS+=(filesystems fsck)
 
-# -----------------------------
-# Regenerate initramfs
-# -----------------------------
-ui_info "Regenerating initramfs for kernel $KERNEL_PKG..."
+ui_info "Setting HOOKS: ${HOOKS[*]}"
+sed -i "s/^HOOKS=.*/HOOKS=(${HOOKS[*]})/" "$MKINITCPIO_CONF"
+
+# -------------------------------------------------
+# Generate initramfs
+# -------------------------------------------------
+ui_info "Generating initramfs..."
 mkinitcpio -P
 
-ui_success "Initramfs regenerated successfully"
+ui_success "Initramfs configured successfully"

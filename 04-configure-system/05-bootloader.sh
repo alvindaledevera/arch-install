@@ -1,15 +1,20 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ui_banner "Bootloader Setup"
+ui_banner "Bootloader Setup (systemd-boot)"
 
 # -------------------------------------------------
-# Ensure EFI is mounted
+# Sanity checks
 # -------------------------------------------------
-if ! mountpoint -q /boot; then
-    ui_info "Mounting EFI partition $EFI_PART to /boot"
-    mount "$EFI_PART" /boot
-fi
+[[ -d /sys/firmware/efi ]] || {
+    ui_error "System not booted in UEFI mode"
+    exit 1
+}
+
+[[ -n "${ROOT_PART:-}" ]] || {
+    ui_error "ROOT_PART not set"
+    exit 1
+}
 
 # -------------------------------------------------
 # Install systemd-boot
@@ -18,41 +23,64 @@ ui_info "Installing systemd-boot..."
 bootctl install
 
 # -------------------------------------------------
-# Detect root UUID
+# Kernel paths
 # -------------------------------------------------
-ROOT_UUID=$(blkid -s UUID -o value "${CRYPT_ROOT:-$ROOT_PART}")
+KERNEL_IMAGE="/vmlinuz-linux"
+INITRAMFS_IMAGE="/initramfs-linux.img"
 
 # -------------------------------------------------
-# Create boot loader entry
+# Root flags
 # -------------------------------------------------
-BOOT_ENTRY="/boot/loader/entries/arch.conf"
+ROOT_FLAGS="rw"
 
-ui_info "Creating boot entry: $BOOT_ENTRY"
-mkdir -p /boot/loader/entries
-
-cat <<EOF > "$BOOT_ENTRY"
-title   Arch Linux
-linux   /vmlinuz-linux
-initrd  /initramfs-linux.img
-EOF
-
-# If encrypted root, add LUKS hook
-if [[ -n "${CRYPT_ROOT:-}" ]]; then
-    cat <<EOF >> "$BOOT_ENTRY"
-options cryptdevice=UUID=$ROOT_UUID:cryptroot root=/dev/mapper/cryptroot rw
-EOF
-else
-    cat <<EOF >> "$BOOT_ENTRY"
-options root=UUID=$ROOT_UUID rw
-EOF
+if [[ "${FS_TYPE:-}" == "btrfs" ]]; then
+    ROOT_FLAGS+=" rootflags=subvol=@"
 fi
 
 # -------------------------------------------------
-# Set default bootloader
+# Kernel options
 # -------------------------------------------------
-ui_info "Setting default bootloader to Arch Linux"
-echo "default arch.conf" > /boot/loader/loader.conf
-echo "timeout 3" >> /boot/loader/loader.conf
-echo "editor 0" >> /boot/loader/loader.conf
+OPTIONS=""
+
+if [[ "${USE_LUKS:-N}" =~ ^[Yy]$ ]]; then
+    ui_info "Configuring encrypted root"
+
+    LUKS_UUID="$(blkid -s UUID -o value "$ROOT_PART")"
+
+    OPTIONS+="rd.luks.name=${LUKS_UUID}=cryptroot "
+    OPTIONS+="root=/dev/mapper/cryptroot "
+else
+    ui_info "Configuring unencrypted root"
+
+    ROOT_UUID="$(blkid -s UUID -o value "$ROOT_PART")"
+    OPTIONS+="root=UUID=${ROOT_UUID} "
+fi
+
+OPTIONS+="$ROOT_FLAGS"
+
+# -------------------------------------------------
+# Write boot entry
+# -------------------------------------------------
+ENTRY_FILE="/boot/loader/entries/arch.conf"
+
+ui_info "Creating boot entry: $ENTRY_FILE"
+
+cat <<EOF > "$ENTRY_FILE"
+title   Arch Linux
+linux   $KERNEL_IMAGE
+initrd  $INITRAMFS_IMAGE
+options $OPTIONS
+EOF
+
+# -------------------------------------------------
+# loader.conf
+# -------------------------------------------------
+ui_info "Configuring loader.conf"
+
+cat <<EOF > /boot/loader/loader.conf
+default arch
+timeout 5
+editor no
+EOF
 
 ui_success "Bootloader configured successfully"
