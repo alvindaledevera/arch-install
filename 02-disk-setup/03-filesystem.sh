@@ -3,21 +3,34 @@ set -euo pipefail
 
 ui_banner "Filesystem Setup"
 
+# -------------------------------------------------
+# Sanity checks
+# -------------------------------------------------
+[[ -n "${ROOT_PART:-}" ]] || { ui_error "ROOT_PART not set"; exit 1; }
+[[ -n "${EFI_PART:-}"  ]] || { ui_error "EFI_PART not set";  exit 1; }
+
+# -------------------------------------------------
 # Determine target device
+# -------------------------------------------------
 if [[ "${USE_LUKS:-}" == "yes" ]]; then
     TARGET_DEV="/dev/mapper/cryptroot"
 else
     TARGET_DEV="$ROOT_PART"
 fi
 
-ui_info "Target device: $TARGET_DEV"
+ui_info "Target root device: $TARGET_DEV"
+ui_info "EFI partition     : $EFI_PART"
 
+# -------------------------------------------------
 # Unmount previous mounts
+# -------------------------------------------------
 umount -R /mnt 2>/dev/null || true
 rm -rf /mnt/* 2>/dev/null || true
 mkdir -p /mnt /mnt/home /mnt/.snapshots /mnt/boot
 
-# Ensure LUKS container is open if encrypted
+# -------------------------------------------------
+# Ensure LUKS is open
+# -------------------------------------------------
 if [[ "${USE_LUKS:-}" == "yes" ]]; then
     if ! cryptsetup status cryptroot &>/dev/null; then
         ui_info "Opening LUKS container..."
@@ -25,26 +38,45 @@ if [[ "${USE_LUKS:-}" == "yes" ]]; then
     fi
 fi
 
-# Filesystem selection
-FS_TYPE="${FS_TYPE:-btrfs}"  # default Btrfs
+# -------------------------------------------------
+# Ask before formatting EFI (DEFAULT = NO)
+# -------------------------------------------------
+ui_section "EFI Partition"
+read -rp "Format EFI partition ($EFI_PART) as FAT32? [y/N]: " FORMAT_EFI
+FORMAT_EFI="${FORMAT_EFI:-N}"
+
+if [[ "$FORMAT_EFI" =~ ^[Yy]$ ]]; then
+    ui_warn "Formatting EFI partition as FAT32..."
+    mkfs.fat -F32 "$EFI_PART"
+    ui_success "EFI partition formatted"
+else
+    ui_info "Skipping EFI format"
+fi
+
+# -------------------------------------------------
+# Filesystem selection (default = btrfs)
+# -------------------------------------------------
+FS_TYPE="${FS_TYPE:-btrfs}"
 ui_section "Filesystem selection"
-echo "Available filesystems:"
-echo "  [1] btrfs"
+echo "  [1] btrfs (default)"
 echo "  [2] ext4"
-read -rp "Choose filesystem (1=btrfs, 2=ext4) [default 1]: " fs_choice
+
+read -rp "Choose filesystem (1=btrfs, 2=ext4) [1]: " fs_choice
 case "$fs_choice" in
     2) FS_TYPE="ext4" ;;
     *) FS_TYPE="btrfs" ;;
 esac
 ui_info "Selected filesystem: $FS_TYPE"
 
-# Format filesystem
+# -------------------------------------------------
+# Format ROOT filesystem
+# -------------------------------------------------
 if [[ "$FS_TYPE" == "btrfs" ]]; then
     ui_info "Formatting $TARGET_DEV as Btrfs..."
     mkfs.btrfs -f "$TARGET_DEV"
 
     mount "$TARGET_DEV" /mnt
-    ui_info "Creating Btrfs subvolumes: @, @home, @snapshots..."
+    ui_info "Creating Btrfs subvolumes..."
     btrfs subvolume create /mnt/@
     btrfs subvolume create /mnt/@home
     btrfs subvolume create /mnt/@snapshots
@@ -56,4 +88,7 @@ fi
 
 ui_success "Root filesystem formatted"
 
+# -------------------------------------------------
+# Export
+# -------------------------------------------------
 export FS_TYPE TARGET_DEV
