@@ -22,12 +22,5 @@ if ! ping -c 1 ping.archlinux.org &>/dev/null; then
   exit 1
 fi
 
-# Vars sanity
-for v in HOSTNAME LOCALE USERNAME; do
-  if [[ -z "${!v}" ]]; then
-    ui_error "Variable not set: $v"
-    exit 1
-  fi
-done
 
 ui_success "All checks passed"
