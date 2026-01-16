@@ -15,7 +15,7 @@ mountpoint -q /mnt || {
 # Generate fstab
 # -------------------------------------------------
 ui_info "Generating fstab..."
-genfstab -U /mnt > /mnt/etc/fstab
+genfstab -U /mnt >> /mnt/etc/fstab
 
 ui_success "fstab generated"
 
