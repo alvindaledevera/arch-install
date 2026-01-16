@@ -3,16 +3,11 @@ set -euo pipefail
 
 ui_banner "Timezone Configuration"
 
-# -------------------------------------------------
-# Default timezone
-# -------------------------------------------------
-DEFAULT_TZ="Asia/Manila"
-
 ui_section "Timezone selection"
-ui_info "Default timezone: $DEFAULT_TZ"
+ui_info "Default timezone: $TIMEZONE"
 
-read -rp "Enter timezone (e.g. Asia/Manila) [default: $DEFAULT_TZ]: " TIMEZONE
-TIMEZONE="${TIMEZONE:-$DEFAULT_TZ}"
+read -rp "Enter timezone (e.g. Asia/Manila) [default: $TIMEZONE]: " TIMEZONE
+TIMEZONE="${TIMEZONE}"
 
 ZONEINFO="/usr/share/zoneinfo/$TIMEZONE"
 
