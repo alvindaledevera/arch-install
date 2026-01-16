@@ -10,7 +10,6 @@ ui_banner "Disk Encryption (LUKS)"
 # -------------------------------------------------
 read -rp "Encrypt root partition with LUKS? [Y/n]: " USE_LUKS
 USE_LUKS="${USE_LUKS:-Y}"
-export USE_LUKS
 
 if [[ ! "$USE_LUKS" =~ ^[Yy] ]]; then
     ui_info "LUKS encryption skipped"
@@ -66,10 +65,7 @@ set -e
 # Open LUKS container
 # -------------------------------------------------
 CRYPT_NAME="cryptroot"
-if ! cryptsetup open "$ROOT_PART" "$CRYPT_NAME"; then
-    ui_error "Failed to open LUKS device"
-    exit 1
-fi
+cryptsetup open "$ROOT_PART" "$CRYPT_NAME"
 CRYPT_ROOT="/dev/mapper/$CRYPT_NAME"
 
 # -------------------------------------------------
