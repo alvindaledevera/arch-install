@@ -96,10 +96,6 @@ read -rp "Select ROOT partition: " ROOT_IDX
 [[ "$ROOT_IDX" =~ ^[0-9]+$ ]] && [[ -n "${ROOT_CANDIDATES[$ROOT_IDX]:-}" ]] || { ui_error "Invalid root selection"; exit 1; }
 ROOT_PART="${ROOT_CANDIDATES[$ROOT_IDX]}"
 
-# -------------------------------------------------
-# Default encryption = YES
-# -------------------------------------------------
-USE_LUKS="yes"
 
 # -------------------------------------------------
 # Summary
@@ -108,7 +104,6 @@ ui_banner "Partition Summary"
 ui_step "Disk       : $DISK"
 ui_step "EFI Part   : $EFI_PART"
 ui_step "Root Part  : $ROOT_PART"
-ui_step "LUKS Root  : $USE_LUKS"
 
 # -------------------------------------------------
 # Final confirmation (default YES)
@@ -122,4 +117,4 @@ ui_success "Partition layout confirmed"
 # -------------------------------------------------
 # Export
 # -------------------------------------------------
-export DISK EFI_PART ROOT_PART USE_LUKS
+export DISK EFI_PART ROOT_PART
