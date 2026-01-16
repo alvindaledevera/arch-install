@@ -97,6 +97,6 @@ run_chroot_dir "04-configure-system"
 # -----------------------------
 # Post-install
 # -----------------------------
-run_dir "05-post-install"
+# run_dir "05-post-install"
 
 ui_success "Installation complete! You can reboot now 🚀"
