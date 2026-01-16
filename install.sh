@@ -77,7 +77,26 @@ ui_banner "Arch Linux Installation Started"
 run_dir "01-pre-installation"
 run_dir "02-disk-setup"
 run_dir "03-installation"
+
+# -----------------------------
+# Copy installer into target system before chroot
+# -----------------------------
+ui_section "Copy arch-install into target system"
+if [[ ! -d /mnt/root/arch-install ]]; then
+    ui_info "Copying arch-install directory to /mnt/root..."
+    cp -a "$ROOT_DIR" /mnt/root/arch-install
+else
+    ui_warn "arch-install already exists in target system, skipping copy"
+fi
+
+# -----------------------------
+# Chroot configuration
+# -----------------------------
 run_chroot_dir "04-configure-system"
+
+# -----------------------------
+# Post-install
+# -----------------------------
 run_dir "05-post-install"
 
 ui_success "Installation complete! You can reboot now 🚀"
