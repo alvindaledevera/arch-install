@@ -18,7 +18,7 @@ ui_step "Locale                 : ${LOCALE:-<not set>}"
 ui_step "Keymap                 : ${KEYMAP:-<not set>}"
 ui_step "Timezone               : ${TIMEZONE:-<auto>}"
 ui_step "User                   : ${USERNAME:-<not set>}"
-ui_step "Filesystem             : ${FS_TYPE:-<not set>}""
+ui_step "Filesystem             : ${FS_TYPE:-<not set>}"
 
 echo
 ui_info "Disk and partitioning were already handled in the previous step."
