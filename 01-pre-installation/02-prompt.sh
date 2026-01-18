@@ -13,7 +13,7 @@ FS_TYPE="${FS_TYPE:-btrfs}"
 ui_banner "Pre-installation: Confirmation"
 
 ui_step "Hostname               : ${HOSTNAME:-<not set>}"
-ui_step "Use LUKS Encryption    : ${US_LUKS:-<not set>}"
+ui_step "Use LUKS Encryption    : ${USE_LUKS:-<not set>}"
 ui_step "Locale                 : ${LOCALE:-<not set>}"
 ui_step "Keymap                 : ${KEYMAP:-<not set>}"
 ui_step "Timezone               : ${TIMEZONE:-<auto>}"
