@@ -51,8 +51,10 @@ run_chroot_dir() {
         [[ -x "$script" ]] || chmod +x "$script"
         ui_step "$(basename "$script")"
 
-        # Use run_chroot_script from lib/chroot.sh
-        run_chroot_script "/root/arch-install/${dir}/$(basename "$script")"
+        # Path inside chroot
+        local chroot_script="/root/arch-install/${dir}/$(basename "$script")"
+
+        run_chroot_script "$chroot_script"
     done
 }
 

@@ -13,37 +13,34 @@ run_in_chroot() {
 }
 
 # -------------------------------------------------
-# Run script inside chroot with env + vars.conf
+# Run a script inside chroot
 # -------------------------------------------------
 run_chroot_script() {
-    local script="$1"
-
-    if [[ ! -f "$CHROOT_DIR/$script" ]]; then
-        echo "ERROR: Chroot script not found: $script"
+    local script_path="$1"   # path relative to chroot: /root/arch-install/...
+    
+    # Ensure the script exists in the chroot
+    if [[ ! -f "$CHROOT_DIR$script_path" ]]; then
+        echo "ERROR: Chroot script not found: $CHROOT_DIR$script_path"
         exit 1
     fi
 
-    arch-chroot "$CHROOT_DIR" /bin/bash -euo pipefail <<EOF
-# -------------------------------------------------
-# Load vars.conf if present
-# -------------------------------------------------
+    echo "[INFO] Running script inside chroot: $script_path"
 
-if [[ -f "$VARS_FILE" ]]; then
-    source "$VARS_FILE"
-else
-    echo "WARN: vars.conf not found inside chroot"
-fi
+    # Run inside chroot
+    arch-chroot "$CHROOT_DIR" /bin/bash -euo pipefail -c "
+        # Load vars.conf if exists
+        if [[ -f $VARS_FILE ]]; then
+            source $VARS_FILE
+        else
+            echo 'WARN: vars.conf not found inside chroot'
+        fi
 
-# -------------------------------------------------
-# Load shared libraries
-# -------------------------------------------------
-for lib in $CHROOT_INSTALL_DIR/lib/*.sh; do
-    source "\$lib"
-done
+        # Load libraries
+        for lib in $CHROOT_INSTALL_DIR/lib/*.sh; do
+            source \"\$lib\"
+        done
 
-# -------------------------------------------------
-# Run actual script
-# -------------------------------------------------
-source "$script"
-EOF
+        # Run the target script
+        /bin/bash $script_path
+    "
 }

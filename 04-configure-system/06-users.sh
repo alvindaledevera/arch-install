@@ -8,7 +8,7 @@ ui_banner "User Setup"
 # -----------------------------
 ui_section "Set root password"
 echo "Please enter the root password:"
-passwd root
+passwd
 
 # # -----------------------------
 # # Create regular user
