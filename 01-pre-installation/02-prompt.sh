@@ -21,19 +21,13 @@ ui_step "User                   : ${USERNAME:-<not set>}"
 ui_step "Filesystem             : ${FS_TYPE:-<not set>}"
 
 echo
-ui_info "Disk and partitioning were already handled in the previous step."
+read -rp "Continue installation? [Y/n]: " ans
+ans="${ans:-Y}"
 
-# -------------------------------------------------
-# Final confirmation (default = YES)
-# -------------------------------------------------
-if [[ "$AUTO_CONFIRM" != "true" ]]; then
-    read -rp "Continue installation? [Y/n]: " ans
-    ans="${ans:-Y}"
-
-    if [[ ! "$ans" =~ ^[Yy]$ ]]; then
-        ui_error "Installation aborted by user"
-        exit 1
-    fi
+if [[ ! "$ans" =~ ^[Yy]$ ]]; then
+    ui_error "Installation aborted by user"
+    exit 1
 fi
+
 
 ui_success "Confirmation accepted"
