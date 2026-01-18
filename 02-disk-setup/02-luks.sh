@@ -6,13 +6,17 @@ ui_banner "Disk Encryption (LUKS)"
 [[ -n "${ROOT_PART:-}" ]] || { ui_error "ROOT_PART is not set"; exit 1; }
 
 # -------------------------------------------------
-# Ask user if they want LUKS encryption
+# Determine USE_LUKS
 # -------------------------------------------------
-read -rp "Encrypt root partition with LUKS? [Y/n]: " USE_LUKS
-USE_LUKS="${USE_LUKS:-Y}"
-USE_LUKS="${USE_LUKS,,}"   # normalize to lowercase
-export USE_LUKS
+# If USE_LUKS is not set in vars.conf, ask the user
+if [[ -z "${USE_LUKS:-}" ]]; then
+    read -rp "Encrypt root partition with LUKS? [Y/n]: " USE_LUKS
+    USE_LUKS="${USE_LUKS:-Y}"
+fi
 
+USE_LUKS="${USE_LUKS,,}"   # normalize to lowercase
+
+# Validate input
 case "$USE_LUKS" in
     y|yes)
         USE_LUKS="yes"
@@ -34,7 +38,7 @@ export USE_LUKS
 if [[ "$USE_LUKS" == "no" ]]; then
     ui_info "LUKS encryption skipped"
 
-    # Ensure no leftover mappings
+    # Close leftover LUKS container if exists
     if cryptsetup status cryptroot &>/dev/null; then
         ui_warn "Closing existing LUKS container..."
         cryptsetup close cryptroot
