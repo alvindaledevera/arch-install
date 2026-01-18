@@ -1,3 +1,12 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+run_copy_install_script() {
+    echo "[INFO] Copying arch-install into target system"
+    cp -a "$ROOT_DIR" /mnt/root/arch-install
+}
+
+
 run_chroot() {
     arch-chroot /mnt /bin/bash <<'EOF'
 set -euo pipefail
