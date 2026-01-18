@@ -6,6 +6,18 @@ set -euo pipefail
 # ==================================================
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+export ROOT_DIR
+
+# Load UI helpers
+source "$ROOT_DIR/lib/ui.sh"
+
+# Make scripts executable
+chmod +x "$ROOT_DIR"/*.sh
+chmod +x "$ROOT_DIR"/lib/*.sh
+chmod +x "$ROOT_DIR"/01-pre-installation/*.sh
+chmod +x "$ROOT_DIR"/02-disk-setup/*.sh
+chmod +x "$ROOT_DIR"/03-installation/*.sh
+chmod +x "$ROOT_DIR"/04-configure-system/*.sh
 
 # -----------------------------
 # Load installer config (outside chroot)
