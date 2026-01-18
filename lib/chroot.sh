@@ -1,11 +1,3 @@
-#!/usr/bin/env bash
-set -euo pipefail
-
-run_copy_install_script() {
-    echo "[INFO] Copying arch-install into target system"
-    cp -a "$ROOT_DIR" /mnt/root/arch-install
-}
-
 run_chroot() {
     arch-chroot /mnt /bin/bash <<'EOF'
 set -euo pipefail
@@ -34,11 +26,11 @@ ui_banner "Running chroot system configuration"
 chmod +x /root/arch-install/04-configure-system/*.sh
 
 # ----------------------------------
-# Run scripts in order
+# Run scripts in order (IMPORTANT PART)
 # ----------------------------------
 for script in /root/arch-install/04-configure-system/[0-9][0-9]*.sh; do
     ui_step "$(basename "$script")"
-    /bin/bash "$script"
+    source "$script"
 done
 
 ui_success "Chroot configuration complete"
