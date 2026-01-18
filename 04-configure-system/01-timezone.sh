@@ -3,31 +3,31 @@ set -euo pipefail
 
 ui_banner "Timezone Configuration"
 
-# -----------------------------
-# Timezone logic
-# -----------------------------
+# -------------------------------------------------
+# Auto-detect timezone if not set
+# -------------------------------------------------
 if [[ -n "${TIMEZONE:-}" ]]; then
     ui_info "Using timezone from vars.conf: $TIMEZONE"
 else
-    ui_step "Detecting timezone..."
-    if curl -fsSL https://ipapi.co/timezone >/dev/null 2>&1; then
-        TIMEZONE="$(curl -fsSL https://ipapi.co/timezone)"
-        ui_info "Detected timezone: $TIMEZONE"
-    else
-        ui_warn "Failed to auto-detect timezone"
-        ui_step "Falling back to UTC"
-        TIMEZONE="UTC"
+    if [[ -z "${TIMEZONE:-}" ]]; then
+        ui_step "Detecting timezone..."
+        if curl -fsSL https://ipapi.co/timezone >/dev/null 2>&1; then
+            TIMEZONE="$(curl -fsSL https://ipapi.co/timezone)"
+            ui_info "Detected timezone: $TIMEZONE"
+        else
+            TIMEZONE="UTC"
+            ui_warn "Could not detect timezone automatically. Defaulting to UTC."
+        fi
     fi
-fi
 
-
-# -------------------------------------------------
-# Ask user to confirm or override
-# -------------------------------------------------
-ui_section "Timezone selection"
-read -rp "Enter timezone (e.g., Asia/Manila) [default: $TIMEZONE]: " INPUT_TZ
-if [[ -n "$INPUT_TZ" ]]; then
-    TIMEZONE="$INPUT_TZ"
+    # -------------------------------------------------
+    # Ask user to confirm or override
+    # -------------------------------------------------
+    ui_section "Timezone selection"
+    read -rp "Enter timezone (e.g., Asia/Manila) [default: $TIMEZONE]: " INPUT_TZ
+    if [[ -n "$INPUT_TZ" ]]; then
+        TIMEZONE="$INPUT_TZ"
+    fi
 fi
 
 ZONEINFO="/usr/share/zoneinfo/$TIMEZONE"
