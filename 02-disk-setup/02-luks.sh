@@ -6,9 +6,8 @@ ui_banner "Disk Encryption (LUKS)"
 [[ -n "${ROOT_PART:-}" ]] || { ui_error "ROOT_PART is not set"; exit 1; }
 
 # -------------------------------------------------
-# Determine USE_LUKS
+# Determine USE_LUKS (from vars.conf or ask user)
 # -------------------------------------------------
-# If USE_LUKS is not set in vars.conf, ask the user
 if [[ -z "${USE_LUKS:-}" ]]; then
     read -rp "Encrypt root partition with LUKS? [Y/n]: " USE_LUKS
     USE_LUKS="${USE_LUKS:-Y}"
@@ -53,6 +52,7 @@ fi
 # -------------------------------------------------
 # Ensure nothing is mounted / opened
 # -------------------------------------------------
+ui_info "Unmounting any previous mounts..."
 umount -R /mnt 2>/dev/null || true
 
 if cryptsetup status cryptroot &>/dev/null; then
@@ -65,7 +65,8 @@ fi
 # -------------------------------------------------
 if blkid "$ROOT_PART" | grep -qi crypto_LUKS; then
     ui_warn "Existing LUKS detected, recreating container"
-    cryptsetup luksErase "$ROOT_PART" --force
+    # Updated for new cryptsetup syntax
+    cryptsetup luksErase "$ROOT_PART" --yes
 fi
 
 ui_step "Target partition: $ROOT_PART"
@@ -86,12 +87,12 @@ while true; do
     ui_warn "Passphrases did not match or operation failed."
     read -rp "Try again? [Y/n]: " RETRY
     RETRY="${RETRY:-Y}"
-    RETRY="${RETRY,,}"
+    RETRY="${RETRY,,}"   # normalize
 
-    [[ "$RETRY" =~ ^(y|yes)$ ]] || {
+    if [[ ! "$RETRY" =~ ^(y|yes)$ ]]; then
         ui_error "LUKS setup aborted by user"
         exit 1
-    }
+    fi
 done
 set -e
 
@@ -107,9 +108,9 @@ export CRYPT_ROOT
 # -------------------------------------------------
 # Verify
 # -------------------------------------------------
-[[ -b "$CRYPT_ROOT" ]] || {
+if [[ ! -b "$CRYPT_ROOT" ]]; then
     ui_error "Failed to open LUKS device"
     exit 1
-}
+fi
 
 ui_success "LUKS root ready: $CRYPT_ROOT"
