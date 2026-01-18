@@ -14,10 +14,9 @@ passwd root
 # Create regular user
 # -----------------------------
 read -rp "Enter your username: " USERNAME
-read -rp "Enter the full name (optional): " FULLNAME
 
 ui_info "Creating user: $USERNAME"
-useradd -m -G wheel -s /bin/bash -c "$FULLNAME" "$USERNAME"
+useradd -m -G wheel -s /bin/bash "$USERNAME"
 
 # -----------------------------
 # Set user password
