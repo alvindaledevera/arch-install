@@ -4,30 +4,21 @@ set -euo pipefail
 ui_banner "Timezone Configuration"
 
 # -------------------------------------------------
-# Auto-detect timezone if not set
+# TIMEZONE must exist (from vars.conf or fallback)
 # -------------------------------------------------
-if [[ -n "${TIMEZONE:-}" ]]; then
-    ui_info "Using timezone from vars.conf: $TIMEZONE"
-else
-    if [[ -z "${TIMEZONE:-}" ]]; then
-        ui_step "Detecting timezone..."
-        if curl -fsSL https://ipapi.co/timezone >/dev/null 2>&1; then
-            TIMEZONE="$(curl -fsSL https://ipapi.co/timezone)"
-            ui_info "Detected timezone: $TIMEZONE"
-        else
-            TIMEZONE="UTC"
-            ui_warn "Could not detect timezone automatically. Defaulting to UTC."
-        fi
-    fi
+if [[ -z "${TIMEZONE:-}" ]]; then
+    ui_warn "TIMEZONE not set in vars.conf"
 
-    # -------------------------------------------------
-    # Ask user to confirm or override
-    # -------------------------------------------------
-    ui_section "Timezone selection"
-    read -rp "Enter timezone (e.g., Asia/Manila) [default: $TIMEZONE]: " INPUT_TZ
-    if [[ -n "$INPUT_TZ" ]]; then
-        TIMEZONE="$INPUT_TZ"
+    ui_step "Detecting timezone automatically..."
+    if curl -fsSL https://ipapi.co/timezone >/dev/null 2>&1; then
+        TIMEZONE="$(curl -fsSL https://ipapi.co/timezone)"
+        ui_info "Detected timezone: $TIMEZONE"
+    else
+        TIMEZONE="UTC"
+        ui_warn "Timezone detection failed, defaulting to UTC"
     fi
+else
+    ui_info "Using timezone from vars.conf: $TIMEZONE"
 fi
 
 ZONEINFO="/usr/share/zoneinfo/$TIMEZONE"
@@ -42,15 +33,12 @@ if [[ ! -f "$ZONEINFO" ]]; then
 fi
 
 # -------------------------------------------------
-# Set timezone
+# Apply timezone
 # -------------------------------------------------
-ui_info "Setting timezone to $TIMEZONE"
+ui_step "Setting timezone to $TIMEZONE"
 ln -sf "$ZONEINFO" /etc/localtime
 
-# -------------------------------------------------
-# Sync hardware clock
-# -------------------------------------------------
-ui_info "Synchronizing hardware clock"
+ui_step "Synchronizing hardware clock"
 hwclock --systohc
 
 ui_success "Timezone configured successfully"

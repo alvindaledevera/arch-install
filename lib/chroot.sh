@@ -19,18 +19,18 @@ run_chroot_script() {
     local script="$1"
 
     if [[ ! -f "$script" ]]; then
-        echo "Chroot script not found: $script"
+        echo "ERROR: Chroot script not found: $script"
         exit 1
     fi
 
     arch-chroot "$CHROOT_DIR" /bin/bash -euo pipefail -c "
         # -----------------------------------------
-        # Load vars.conf (if present)
+        # Load vars.conf (single source of truth)
         # -----------------------------------------
         if [[ -f '$VARS_FILE' ]]; then
             source '$VARS_FILE'
         else
-            echo 'WARN: vars.conf not found inside chroot'
+            echo 'WARN: /vars.conf not found inside chroot'
         fi
 
         # -----------------------------------------
@@ -41,7 +41,7 @@ run_chroot_script() {
         done
 
         # -----------------------------------------
-        # Run actual script
+        # Execute the script
         # -----------------------------------------
         source '$script'
     "
