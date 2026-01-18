@@ -56,18 +56,25 @@ else
 fi
 
 # -------------------------------------------------
-# Filesystem selection (default = btrfs)
+# Filesystem selection
 # -------------------------------------------------
-FS_TYPE="${FS_TYPE:-btrfs}"
 ui_section "Filesystem selection"
-echo "  [1] btrfs (default)"
-echo "  [2] ext4"
-read -rp "Choose filesystem (1=btrfs, 2=ext4) [1]: " fs_choice
-case "$fs_choice" in
-    2) FS_TYPE="ext4" ;;
-    *) FS_TYPE="btrfs" ;;
-esac
+
+if [[ -n "${FS_TYPE:-}" ]]; then
+    ui_info "Using filesystem from vars.conf: $FS_TYPE"
+else
+    FS_TYPE="btrfs"
+    echo "  [1] btrfs (default)"
+    echo "  [2] ext4"
+    read -rp "Choose filesystem (1=btrfs, 2=ext4) [1]: " fs_choice
+    case "$fs_choice" in
+        2) FS_TYPE="ext4" ;;
+        *) FS_TYPE="btrfs" ;;
+    esac
+fi
+
 ui_info "Selected filesystem: $FS_TYPE"
+
 
 # -------------------------------------------------
 # Format ROOT filesystem
