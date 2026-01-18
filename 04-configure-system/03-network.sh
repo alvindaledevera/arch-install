@@ -1,65 +1,58 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ui_banner "Network Configuration"
-
-# -------------------------------------------------
-# Load vars.conf (inside chroot)
-# -------------------------------------------------
-VARS_FILE="/root/arch-install/vars.conf"
-if [[ -f "$VARS_FILE" ]]; then
-    source "$VARS_FILE"
-else
-    ui_warn "vars.conf not found inside chroot"
+# -----------------------------
+# UI banner
+# -----------------------------
+if type ui_banner &>/dev/null; then
+    ui_banner "Network Configuration"
 fi
 
-# -------------------------------------------------
-# Hostname
-# -------------------------------------------------
-DEFAULT_HOSTNAME="${HOSTNAME:-archlinux}"
-
-if [[ -n "${HOSTNAME:-}" ]]; then
-    ui_info "Using hostname from vars.conf: $HOSTNAME"
-else
-    ui_step "Hostname setup"
-    read -rp "Enter hostname [default: $DEFAULT_HOSTNAME]: " HOSTNAME
-    HOSTNAME="${HOSTNAME:-$DEFAULT_HOSTNAME}"
+# -----------------------------
+# Hostname setup
+# -----------------------------
+DEFAULT_HOSTNAME="${DEFAULT_HOSTNAME:-archlinux}"
+if type ui_info &>/dev/null; then
+    ui_info "Default hostname: $DEFAULT_HOSTNAME"
 fi
+read -rp "Enter hostname [default: $DEFAULT_HOSTNAME]: " HOSTNAME
+HOSTNAME="${HOSTNAME:-$DEFAULT_HOSTNAME}"
 
-ui_info "Setting hostname to $HOSTNAME"
+if type ui_info &>/dev/null; then
+    ui_info "Setting hostname to $HOSTNAME"
+fi
 echo "$HOSTNAME" > /etc/hostname
 
-# -------------------------------------------------
-# /etc/hosts
-# -------------------------------------------------
-ui_info "Configuring /etc/hosts"
+# -----------------------------
+# /etc/hosts setup
+# -----------------------------
+if type ui_info &>/dev/null; then
+    ui_info "Configuring /etc/hosts..."
+fi
 cat > /etc/hosts <<EOF
 127.0.0.1   localhost
 ::1         localhost
-127.0.1.1   ${HOSTNAME}.localdomain ${HOSTNAME}
+127.0.1.1   $HOSTNAME.localdomain $HOSTNAME
 EOF
 
-# -------------------------------------------------
-# Enable networking services
-# -------------------------------------------------
-ui_info "Enabling systemd-networkd & systemd-resolved"
-systemctl enable systemd-networkd
-systemctl enable systemd-resolved
-
-# -------------------------------------------------
-# resolv.conf (idempotent)
-# -------------------------------------------------
-if [[ ! -L /etc/resolv.conf ]]; then
-    ln -sf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
+# -----------------------------
+# Enable networking services (safe in chroot)
+# -----------------------------
+if type ui_info &>/dev/null; then
+    ui_info "Enabling systemd-networkd and systemd-resolved..."
 fi
+systemctl enable systemd-networkd || true
+systemctl enable systemd-resolved || true
 
-# -------------------------------------------------
-# Basic DHCP for wired interfaces
-# -------------------------------------------------
-NETWORK_DIR="/etc/systemd/network"
-mkdir -p "$NETWORK_DIR"
+# -----------------------------
+# Create symlink for resolv.conf (ignore harmless error)
+# -----------------------------
+ln -sf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf 2>/dev/null || true
 
-cat > "$NETWORK_DIR/20-wired.network" <<EOF
+# -----------------------------
+# Basic DHCP config for wired interfaces
+# -----------------------------
+cat <<EOF > /etc/systemd/network/20-wired.network
 [Match]
 Name=en*
 
@@ -67,4 +60,6 @@ Name=en*
 DHCP=yes
 EOF
 
-ui_success "Network configuration completed"
+if type ui_success &>/dev/null; then
+    ui_success "Network configured successfully"
+fi
