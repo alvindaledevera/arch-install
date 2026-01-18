@@ -54,17 +54,6 @@ run_dir() {
     done
 }
 
-# -----------------------------
-# Helper: run scripts in a directory inside chroot
-# Uses renamed function from lib/chroot.sh: run_chroot_dir_scripts
-# -----------------------------
-run_chroot_dir_safe() {
-    local dir="$1"
-    ui_section "Running ${dir} inside chroot"
-
-    # Calls the function defined in lib/chroot.sh
-    run_chroot_dir "$dir"
-}
 
 # ==================================================
 # Main installation flow
@@ -86,21 +75,16 @@ run_dir "02-disk-setup"
 # -----------------------------
 run_dir "03-installation"
 
+
 # -----------------------------
 # Copy installer into target system before chroot
 # -----------------------------
-ui_section "Copy arch-install into target system"
-if [[ ! -d /mnt/root/arch-install ]]; then
-    ui_info "Copying arch-install directory to /mnt/root..."
-    cp -a "$ROOT_DIR" /mnt/root/arch-install
-else
-    ui_warn "arch-install already exists in target system, skipping copy"
-fi
+run_copy_install_script
 
 # -----------------------------
 # Chroot configuration
 # -----------------------------
-run_chroot_dir_safe "04-configure-system"
+run_chroot
 
 # -----------------------------
 # Post-install scripts (optional)
