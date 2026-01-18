@@ -3,19 +3,23 @@ set -euo pipefail
 
 ui_banner "Timezone Configuration"
 
-# -------------------------------------------------
-# Auto-detect timezone if not set
-# -------------------------------------------------
-if [[ -z "${TIMEZONE:-}" ]]; then
+# -----------------------------
+# Timezone logic
+# -----------------------------
+if [[ -n "${TIMEZONE:-}" ]]; then
+    ui_info "Using timezone from vars.conf: $TIMEZONE"
+else
     ui_step "Detecting timezone..."
     if curl -fsSL https://ipapi.co/timezone >/dev/null 2>&1; then
         TIMEZONE="$(curl -fsSL https://ipapi.co/timezone)"
         ui_info "Detected timezone: $TIMEZONE"
     else
+        ui_warn "Failed to auto-detect timezone"
+        ui_step "Falling back to UTC"
         TIMEZONE="UTC"
-        ui_warn "Could not detect timezone automatically. Defaulting to UTC."
     fi
 fi
+
 
 # -------------------------------------------------
 # Ask user to confirm or override
