@@ -65,9 +65,9 @@ fi
 # -------------------------------------------------
 if blkid "$ROOT_PART" | grep -qi crypto_LUKS; then
     ui_warn "Existing LUKS detected, recreating container"
-    # Updated for new cryptsetup syntax
-    cryptsetup luksErase "$ROOT_PART" --yes
+    cryptsetup luksErase "$ROOT_PART"
 fi
+
 
 ui_step "Target partition: $ROOT_PART"
 ui_info "You will be prompted for LUKS passphrase"
