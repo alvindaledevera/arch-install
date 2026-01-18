@@ -27,6 +27,7 @@ run_chroot_script() {
 # -------------------------------------------------
 # Load vars.conf if present
 # -------------------------------------------------
+
 if [[ -f "$VARS_FILE" ]]; then
     source "$VARS_FILE"
 else
