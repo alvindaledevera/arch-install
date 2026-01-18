@@ -37,10 +37,15 @@ export USE_LUKS
 if [[ "$USE_LUKS" == "no" ]]; then
     ui_info "LUKS encryption skipped"
 
-    # Close leftover LUKS container if exists
+    ui_info "Unmounting any mounts using cryptroot..."
+    umount -R /mnt 2>/dev/null || true
+
     if cryptsetup status cryptroot &>/dev/null; then
         ui_warn "Closing existing LUKS container..."
-        cryptsetup close cryptroot
+        cryptsetup close cryptroot || {
+            ui_error "Failed to close cryptroot (device still in use)"
+            exit 1
+        }
     fi
 
     unset CRYPT_ROOT
@@ -48,6 +53,7 @@ if [[ "$USE_LUKS" == "no" ]]; then
 
     return 0 2>/dev/null || exit 0
 fi
+
 
 # -------------------------------------------------
 # Ensure nothing is mounted / opened
