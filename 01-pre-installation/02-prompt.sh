@@ -4,8 +4,8 @@ set -euo pipefail
 # -------------------------------------------------
 # Defaults (safe kahit commented sa vars.conf)
 # -------------------------------------------------
-AUTO_CONFIRM="${AUTO_CONFIRM:-false}"
-FS_TYPE="${FS_TYPE:-btrfs}"
+#AUTO_CONFIRM="${AUTO_CONFIRM:-false}"
+#FS_TYPE="${FS_TYPE:-btrfs}"
 
 # -------------------------------------------------
 # Pre-installation confirmation (NON-DESTRUCTIVE)
