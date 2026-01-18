@@ -13,7 +13,8 @@ run_in_chroot() {
 }
 
 # -------------------------------------------------
-# Run script inside chroot with env + vars.conf
+# Run a script inside chroot with env + vars.conf
+# Ensures /dev, /proc, /sys, /run are mounted so passwd works
 # -------------------------------------------------
 run_chroot_script() {
     local script="$1"
@@ -23,11 +24,19 @@ run_chroot_script() {
         exit 1
     fi
 
+    echo "[INFO] Running script inside chroot: $script"
+
+    # Mount pseudo-filesystems if not already mounted
+    mountpoint -q "$CHROOT_DIR/proc" || mount -t proc /proc "$CHROOT_DIR/proc"
+    mountpoint -q "$CHROOT_DIR/sys" || mount --rbind /sys "$CHROOT_DIR/sys"
+    mountpoint -q "$CHROOT_DIR/dev" || mount --rbind /dev "$CHROOT_DIR/dev"
+    mountpoint -q "$CHROOT_DIR/run" || mount --rbind /run "$CHROOT_DIR/run"
+
+    # Run script interactively inside chroot
     arch-chroot "$CHROOT_DIR" /bin/bash -euo pipefail <<EOF
 # -------------------------------------------------
 # Load vars.conf if present
 # -------------------------------------------------
-
 if [[ -f "$VARS_FILE" ]]; then
     source "$VARS_FILE"
 else
@@ -46,4 +55,6 @@ done
 # -------------------------------------------------
 source "$script"
 EOF
+
+    echo "[INFO] Finished script: $script"
 }
