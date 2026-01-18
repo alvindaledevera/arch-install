@@ -63,7 +63,7 @@ run_chroot_dir_safe() {
     ui_section "Running ${dir} inside chroot"
 
     # Calls the function defined in lib/chroot.sh
-    run_chroot_dir_scripts "$dir"
+    run_chroot_dir "$dir"
 }
 
 # ==================================================
