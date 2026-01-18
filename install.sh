@@ -55,14 +55,15 @@ run_dir() {
 }
 
 # -----------------------------
-# Helper: run all scripts in a directory inside chroot
+# Helper: run scripts in a directory inside chroot
+# Uses renamed function from lib/chroot.sh: run_chroot_dir_scripts
 # -----------------------------
-run_chroot_dir() {
+run_chroot_dir_safe() {
     local dir="$1"
-    ui_section "Running ${dir} (chroot)"
+    ui_section "Running ${dir} inside chroot"
 
-    # Use lib/chroot.sh function
-    run_chroot_dir "$dir"
+    # Calls the function defined in lib/chroot.sh
+    run_chroot_dir_scripts "$dir"
 }
 
 # ==================================================
@@ -99,7 +100,7 @@ fi
 # -----------------------------
 # Chroot configuration
 # -----------------------------
-run_chroot_dir "04-configure-system"
+run_chroot_dir_safe "04-configure-system"
 
 # -----------------------------
 # Post-install scripts (optional)
