@@ -1,6 +1,6 @@
 run_copy_install_script(){
     # Copy  scripts into the new system
-cp -r "$ROOT_DIR" "/mnt/root/arch-install"
+cp -r "$ROOT_DIR" /mnt/root/arch-install
 
 }
 
