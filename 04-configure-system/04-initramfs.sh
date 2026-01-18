@@ -9,7 +9,7 @@ MKINITCPIO_CONF="/etc/mkinitcpio.conf"
 # Backup
 # -------------------------------------------------
 ui_info "Backing up mkinitcpio.conf"
-[[ -f "${MKINITCPIO_CONF}.bak" ]] || cp "$MKINITCPIO_CONF" "${MKINITCPIO_CONF}.bak"
+cp "$MKINITCPIO_CONF" "${MKINITCPIO_CONF}.bak"
 
 # -------------------------------------------------
 # MODULES
@@ -21,19 +21,18 @@ if [[ "${FS_TYPE:-}" == "btrfs" ]]; then
     MODULES+=(btrfs)
 fi
 
-# Keyboard module
+# Keyboard module (safe)
 MODULES+=(atkbd)
 
 ui_info "Setting MODULES: ${MODULES[*]}"
-sed -i "s|^MODULES=.*|MODULES=(${MODULES[*]})|" "$MKINITCPIO_CONF"
+sed -i "s/^MODULES=.*/MODULES=(${MODULES[*]})/" "$MKINITCPIO_CONF"
 
 # -------------------------------------------------
 # HOOKS (systemd-based)
 # -------------------------------------------------
 HOOKS=(base systemd autodetect keyboard sd-vconsole modconf block)
 
-# LUKS support
-if [[ "${USE_LUKS:-no}" == "yes" ]]; then
+if [[ "${USE_LUKS:-N}" =~ ^[Yy]$ ]]; then
     ui_info "LUKS enabled → adding sd-encrypt hook"
     HOOKS+=(sd-encrypt)
 fi
@@ -41,7 +40,7 @@ fi
 HOOKS+=(filesystems fsck)
 
 ui_info "Setting HOOKS: ${HOOKS[*]}"
-sed -i "s|^HOOKS=.*|HOOKS=(${HOOKS[*]})|" "$MKINITCPIO_CONF"
+sed -i "s/^HOOKS=.*/HOOKS=(${HOOKS[*]})/" "$MKINITCPIO_CONF"
 
 # -------------------------------------------------
 # Generate initramfs
