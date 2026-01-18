@@ -13,34 +13,38 @@ run_in_chroot() {
 }
 
 # -------------------------------------------------
-# Run a script inside chroot
+# Run all scripts in a directory inside chroot
 # -------------------------------------------------
-run_chroot_script() {
-    local script_path="$1"   # path relative to chroot: /root/arch-install/...
-    
-    # Ensure the script exists in the chroot
-    if [[ ! -f "$CHROOT_DIR$script_path" ]]; then
-        echo "ERROR: Chroot script not found: $CHROOT_DIR$script_path"
-        exit 1
-    fi
+run_chroot_dir() {
+    local dir="$1"   # relative path inside installer, e.g., 04-configure-system
+    local chroot_dir="$CHROOT_INSTALL_DIR/$dir"
 
-    echo "[INFO] Running script inside chroot: $script_path"
-
-    # Run inside chroot
     arch-chroot "$CHROOT_DIR" /bin/bash -euo pipefail -c "
-        # Load vars.conf if exists
+        set -euo pipefail
+
+        # -------------------------------------------------
+        # Load vars.conf if present
+        # -------------------------------------------------
         if [[ -f $VARS_FILE ]]; then
             source $VARS_FILE
         else
             echo 'WARN: vars.conf not found inside chroot'
         fi
 
-        # Load libraries
+        # -------------------------------------------------
+        # Load shared libraries
+        # -------------------------------------------------
         for lib in $CHROOT_INSTALL_DIR/lib/*.sh; do
             source \"\$lib\"
         done
 
-        # Run the target script
-        /bin/bash $script_path
+        # -------------------------------------------------
+        # Loop over scripts in this directory
+        # -------------------------------------------------
+        for script in $chroot_dir/*.sh; do
+            [[ -x \"\$script\" ]] || chmod +x \"\$script\"
+            ui_step \"Running \$(basename \$script)\"
+            source \"\$script\"
+        done
     "
 }

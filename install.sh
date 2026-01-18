@@ -8,7 +8,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # -----------------------------
-# Load config
+# Load installer config (outside chroot)
 # -----------------------------
 CONFIG_FILE="${ROOT_DIR}/vars.conf"
 
@@ -28,37 +28,6 @@ for lib in ui log disk pacman chroot; do
 done
 
 # -----------------------------
-# Helpers
-# -----------------------------
-run_dir() {
-    local dir="$1"
-
-    ui_section "Running ${dir}"
-
-    for script in "${ROOT_DIR}/${dir}"/*.sh; do
-        [[ -x "$script" ]] || chmod +x "$script"
-        ui_step "$(basename "$script")"
-        source "$script"
-    done
-}
-
-run_chroot_dir() {
-    local dir="$1"
-
-    ui_section "Running ${dir} (chroot)"
-
-    for script in "${ROOT_DIR}/${dir}"/*.sh; do
-        [[ -x "$script" ]] || chmod +x "$script"
-        ui_step "$(basename "$script")"
-
-        # Path inside chroot
-        local chroot_script="/root/arch-install/${dir}/$(basename "$script")"
-
-        run_chroot_script "$chroot_script"
-    done
-}
-
-# -----------------------------
 # Safety checks
 # -----------------------------
 if [[ $EUID -ne 0 ]]; then
@@ -72,12 +41,48 @@ if [[ ! -d /sys/firmware/efi ]]; then
 fi
 
 # -----------------------------
-# Main flow (Arch Wiki order)
+# Helper: run scripts in a directory (outside chroot)
 # -----------------------------
+run_dir() {
+    local dir="$1"
+    ui_section "Running ${dir}"
+
+    for script in "${ROOT_DIR}/${dir}"/*.sh; do
+        [[ -x "$script" ]] || chmod +x "$script"
+        ui_step "$(basename "$script")"
+        source "$script"
+    done
+}
+
+# -----------------------------
+# Helper: run all scripts in a directory inside chroot
+# -----------------------------
+run_chroot_dir() {
+    local dir="$1"
+    ui_section "Running ${dir} (chroot)"
+
+    # Use lib/chroot.sh function
+    run_chroot_dir "$dir"
+}
+
+# ==================================================
+# Main installation flow
+# ==================================================
 ui_banner "Arch Linux Installation Started"
 
+# -----------------------------
+# Pre-installation (outside chroot)
+# -----------------------------
 run_dir "01-pre-installation"
+
+# -----------------------------
+# Disk setup (outside chroot)
+# -----------------------------
 run_dir "02-disk-setup"
+
+# -----------------------------
+# Base installation (outside chroot)
+# -----------------------------
 run_dir "03-installation"
 
 # -----------------------------
@@ -97,7 +102,7 @@ fi
 run_chroot_dir "04-configure-system"
 
 # -----------------------------
-# Post-install
+# Post-install scripts (optional)
 # -----------------------------
 # run_dir "05-post-install"
 
