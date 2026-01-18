@@ -8,19 +8,21 @@ if type ui_banner &>/dev/null; then
     ui_banner "Network Configuration"
 fi
 
-# -----------------------------
-# Hostname setup
-# -----------------------------
-DEFAULT_HOSTNAME="${DEFAULT_HOSTNAME:-archlinux}"
-if type ui_info &>/dev/null; then
-    ui_info "Default hostname: $DEFAULT_HOSTNAME"
-fi
-read -rp "Enter hostname [default: $DEFAULT_HOSTNAME]: " HOSTNAME
-HOSTNAME="${HOSTNAME:-$DEFAULT_HOSTNAME}"
 
-if type ui_info &>/dev/null; then
-    ui_info "Setting hostname to $HOSTNAME"
+# -----------------------------
+# Hostname
+# -----------------------------
+DEFAULT_HOSTNAME="${HOSTNAME:-archlinux}"
+
+if [[ -n "${HOSTNAME:-}" ]]; then
+    ui_info "Using hostname from vars.conf: $HOSTNAME"
+else
+    ui_step "Hostname setup"
+    read -rp "Enter hostname [default: $DEFAULT_HOSTNAME]: " HOSTNAME
+    HOSTNAME="${HOSTNAME:-$DEFAULT_HOSTNAME}"
 fi
+
+ui_info "Setting hostname to $HOSTNAME"
 echo "$HOSTNAME" > /etc/hostname
 
 # -----------------------------
