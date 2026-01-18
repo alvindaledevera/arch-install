@@ -3,51 +3,81 @@ set -euo pipefail
 
 ui_banner "Localization Configuration"
 
-# -----------------------------
-# Default locale
-# -----------------------------
-DEFAULT_LOCALE="${DEFAULT_LOCALE:-en_US.UTF-8}"
-DEFAULT_LANG="${DEFAULT_LANG:-en_US.UTF-8}"
-DEFAULT_KEYMAP="${DEFAULT_KEYMAP:-us}"
+# -------------------------------------------------
+# Defaults (used only if not set in vars.conf)
+# -------------------------------------------------
+LOCALE_DEFAULT="en_US.UTF-8"
+LANG_DEFAULT="en_US.UTF-8"
+KEYMAP_DEFAULT="us"
 
-ui_info "Default locale: $DEFAULT_LOCALE"
-ui_info "Default language: $DEFAULT_LANG"
-ui_info "Default keyboard layout: $DEFAULT_KEYMAP"
+# -------------------------------------------------
+# Resolve variables (vars.conf → default → prompt)
+# -------------------------------------------------
 
-# -----------------------------
-# Locale selection
-# -----------------------------
-read -rp "Enter locale [default: $DEFAULT_LOCALE]: " LOCALE
-LOCALE="${LOCALE:-$DEFAULT_LOCALE}"
+# ----- LOCALE -----
+if [[ -z "${LOCALE:-}" ]]; then
+    ui_step "Locale not set in vars.conf"
+    read -rp "Enter locale [default: $LOCALE_DEFAULT]: " LOCALE
+    LOCALE="${LOCALE:-$LOCALE_DEFAULT}"
+else
+    ui_info "Using locale from vars.conf: $LOCALE"
+fi
 
-read -rp "Enter language [default: $DEFAULT_LANG]: " LANG
-LANG="${LANG:-$DEFAULT_LANG}"
+# ----- LANG -----
+if [[ -z "${LANG:-}" ]]; then
+    read -rp "Enter language [default: $LANG_DEFAULT]: " LANG
+    LANG="${LANG:-$LANG_DEFAULT}"
+else
+    ui_info "Using language from vars.conf: $LANG"
+fi
 
-read -rp "Enter keyboard layout [default: $DEFAULT_KEYMAP]: " KEYMAP
-KEYMAP="${KEYMAP:-$DEFAULT_KEYMAP}"
+# ----- KEYMAP -----
+if [[ -z "${KEYMAP:-}" ]]; then
+    read -rp "Enter keyboard layout [default: $KEYMAP_DEFAULT]: " KEYMAP
+    KEYMAP="${KEYMAP:-$KEYMAP_DEFAULT}"
+else
+    ui_info "Using keyboard layout from vars.conf: $KEYMAP"
+fi
 
-# -----------------------------
-# Enable locale in /etc/locale.gen
-# -----------------------------
-ui_info "Enabling locale $LOCALE..."
-sed -i "s/^#\s*\($LOCALE\)/\1/" /etc/locale.gen
+ui_info "Final locale   : $LOCALE"
+ui_info "Final language : $LANG"
+ui_info "Final keymap   : $KEYMAP"
 
-# -----------------------------
+# -------------------------------------------------
+# Validate locale exists in locale.gen
+# -------------------------------------------------
+if ! grep -Eq "^\s*#?\s*$LOCALE" /etc/locale.gen; then
+    ui_error "Locale '$LOCALE' not found in /etc/locale.gen"
+    ui_info "Hint: run → less /etc/locale.gen"
+    exit 1
+fi
+
+# -------------------------------------------------
+# Enable locale
+# -------------------------------------------------
+ui_step "Enabling locale $LOCALE"
+sed -i "s|^#\s*\($LOCALE\)|\1|" /etc/locale.gen
+
+# -------------------------------------------------
 # Generate locales
-# -----------------------------
-ui_info "Generating locales..."
+# -------------------------------------------------
+ui_step "Generating locales"
 locale-gen
 
-# -----------------------------
-# Set system-wide locale
-# -----------------------------
-ui_info "Setting /etc/locale.conf..."
-echo "LANG=$LANG" > /etc/locale.conf
+# -------------------------------------------------
+# Write locale configuration
+# -------------------------------------------------
+ui_step "Writing /etc/locale.conf"
+cat <<EOF > /etc/locale.conf
+LANG=$LANG
+EOF
 
-# -----------------------------
-# Set keyboard layout
-# -----------------------------
-ui_info "Setting keyboard layout to $KEYMAP..."
-echo "KEYMAP=$KEYMAP" > /etc/vconsole.conf
+# -------------------------------------------------
+# Set console keyboard layout
+# -------------------------------------------------
+ui_step "Writing /etc/vconsole.conf"
+cat <<EOF > /etc/vconsole.conf
+KEYMAP=$KEYMAP
+EOF
 
 ui_success "Localization configured successfully"
