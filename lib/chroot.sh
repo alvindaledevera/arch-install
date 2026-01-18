@@ -2,13 +2,19 @@
 set -euo pipefail
 
 CHROOT_DIR="/mnt"
+INSTALL_DIR="/root/arch-install"
+VARS_FILE="/vars.conf"
 
+# -------------------------------------------------
 # Run arbitrary command inside chroot
+# -------------------------------------------------
 run_in_chroot() {
     arch-chroot "$CHROOT_DIR" "$@"
 }
 
-# Run a script inside chroot, ensuring libraries are loaded
+# -------------------------------------------------
+# Run a script inside chroot with full environment
+# -------------------------------------------------
 run_chroot_script() {
     local script="$1"
 
@@ -17,10 +23,26 @@ run_chroot_script() {
         exit 1
     fi
 
-    arch-chroot "$CHROOT_DIR" /bin/bash -c "
-        for lib in /root/arch-install/lib/*.sh; do
+    arch-chroot "$CHROOT_DIR" /bin/bash -euo pipefail -c "
+        # -----------------------------------------
+        # Load vars.conf (if present)
+        # -----------------------------------------
+        if [[ -f '$VARS_FILE' ]]; then
+            source '$VARS_FILE'
+        else
+            echo 'WARN: vars.conf not found inside chroot'
+        fi
+
+        # -----------------------------------------
+        # Load installer libraries
+        # -----------------------------------------
+        for lib in '$INSTALL_DIR'/lib/*.sh; do
             source \"\$lib\"
         done
-        source \"$script\"
+
+        # -----------------------------------------
+        # Run actual script
+        # -----------------------------------------
+        source '$script'
     "
 }
