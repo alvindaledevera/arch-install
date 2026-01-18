@@ -15,18 +15,26 @@ ui_step "Enabling NTP..."
 timedatectl set-ntp true
 
 # -----------------------------
-# Auto-detect timezone
+# Timezone logic
 # -----------------------------
-ui_step "Detecting timezone..."
-# if curl -fsSL https://ipapi.co/timezone >/dev/null 2>&1; then
-#     TIMEZONE="$(curl -fsSL https://ipapi.co/timezone)"
-# fi
-ui_info "Detected timezone: $TIMEZONE"
+if [[ -n "${TIMEZONE:-}" ]]; then
+    ui_info "Using timezone from vars.conf: $TIMEZONE"
+else
+    ui_step "Detecting timezone..."
+    if curl -fsSL https://ipapi.co/timezone >/dev/null 2>&1; then
+        TIMEZONE="$(curl -fsSL https://ipapi.co/timezone)"
+        ui_info "Detected timezone: $TIMEZONE"
+    else
+        ui_warn "Failed to auto-detect timezone"
+        ui_step "Falling back to UTC"
+        TIMEZONE="UTC"
+    fi
+fi
 
 # -----------------------------
 # Set timezone
 # -----------------------------
-ui_step "Setting timezone..."
+ui_step "Setting timezone to $TIMEZONE..."
 timedatectl set-timezone "$TIMEZONE"
 
 # -----------------------------
