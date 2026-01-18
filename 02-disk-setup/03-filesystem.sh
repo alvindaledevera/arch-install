@@ -73,8 +73,16 @@ else
     esac
 fi
 
-ui_info "Selected filesystem: $FS_TYPE"
+# Validate FS_TYPE
+case "$FS_TYPE" in
+    btrfs|ext4) ;;
+    *)
+        ui_error "Invalid FS_TYPE: $FS_TYPE (allowed: btrfs, ext4)"
+        exit 1
+        ;;
+esac
 
+ui_info "Selected filesystem: $FS_TYPE"
 
 # -------------------------------------------------
 # Format ROOT filesystem
