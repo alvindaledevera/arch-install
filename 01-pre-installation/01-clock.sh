@@ -18,9 +18,9 @@ timedatectl set-ntp true
 # Auto-detect timezone
 # -----------------------------
 ui_step "Detecting timezone..."
-if curl -fsSL https://ipapi.co/timezone >/dev/null 2>&1; then
-    TIMEZONE="$(curl -fsSL https://ipapi.co/timezone)"
-fi
+# if curl -fsSL https://ipapi.co/timezone >/dev/null 2>&1; then
+#     TIMEZONE="$(curl -fsSL https://ipapi.co/timezone)"
+# fi
 ui_info "Detected timezone: $TIMEZONE"
 
 # -----------------------------
