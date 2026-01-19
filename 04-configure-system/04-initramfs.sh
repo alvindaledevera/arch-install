@@ -6,6 +6,14 @@ ui_banner "Initramfs Configuration"
 MKINITCPIO_CONF="/etc/mkinitcpio.conf"
 
 # -------------------------------------------------
+# Ensure mkinitcpio.conf exists
+# -------------------------------------------------
+if [[ ! -f "$MKINITCPIO_CONF" ]]; then
+    ui_error "mkinitcpio.conf not found at $MKINITCPIO_CONF"
+    exit 1
+fi
+
+# -------------------------------------------------
 # Backup
 # -------------------------------------------------
 ui_info "Backing up mkinitcpio.conf"
@@ -14,17 +22,14 @@ cp "$MKINITCPIO_CONF" "${MKINITCPIO_CONF}.bak"
 # -------------------------------------------------
 # MODULES
 # -------------------------------------------------
-MODULES=()
+MODULES=(atkbd)  # always include keyboard
 
-# Add btrfs module if needed
 if [[ "${FS_TYPE:-}" == "btrfs" ]]; then
     MODULES+=(btrfs)
 fi
 
-# Keyboard module (safe)
-MODULES+=(atkbd)
-
 ui_info "Setting MODULES: ${MODULES[*]}"
+# Trim spaces and update
 sed -i "s/^MODULES=.*/MODULES=(${MODULES[*]})/" "$MKINITCPIO_CONF"
 
 # -------------------------------------------------
@@ -34,9 +39,11 @@ HOOKS=(base systemd autodetect keyboard sd-vconsole modconf block)
 
 if [[ "${USE_LUKS:-N}" =~ ^[Yy]$ ]]; then
     ui_info "LUKS enabled → adding sd-encrypt hook"
+    # Insert sd-encrypt before filesystems
     HOOKS+=(sd-encrypt)
 fi
 
+# Add final hooks
 HOOKS+=(filesystems fsck)
 
 ui_info "Setting HOOKS: ${HOOKS[*]}"
@@ -48,4 +55,4 @@ sed -i "s/^HOOKS=.*/HOOKS=(${HOOKS[*]})/" "$MKINITCPIO_CONF"
 ui_info "Generating initramfs..."
 mkinitcpio -P
 
-ui_success "Initramfs configured successfully"
+ui_success "Initramfs configured successfully ✅"
