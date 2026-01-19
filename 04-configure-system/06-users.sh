@@ -2,20 +2,9 @@
 set -euo pipefail
 
 # -----------------------------
-# Load UI helpers
+# Root Password Banner
 # -----------------------------
-source /root/arch-install/lib/ui.sh
-
-# -----------------------------
-# UI banner
-# -----------------------------
-ui_banner "User Setup"
-
-# -----------------------------
-# Ask for username
-# -----------------------------
-read -rp "Enter username for new user: " USERNAME
-
+ui_banner "Create Root Password"
 # -----------------------------
 # Root password
 # -----------------------------
@@ -29,8 +18,20 @@ while true; do
 done
 
 # -----------------------------
-# User password
+# Create User Banner
 # -----------------------------
+ui_banner "Create User"
+
+# -----------------------------
+# Ask for username
+# -----------------------------
+read -rp "Enter username for new user: " USERNAME
+
+
+# -----------------------------
+# User Password Banner
+# -----------------------------
+ui_banner "Create User Password"
 while true; do
     read -s -p "Password for $USERNAME: " USER_PASSWORD
     echo
