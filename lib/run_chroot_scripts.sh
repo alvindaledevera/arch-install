@@ -13,6 +13,7 @@ ui_banner "Running chroot system configuration"
 # ----------------------------------
 if [[ -f /root/arch-install/vars.conf ]]; then
     source /root/arch-install/vars.conf
+    export FS_TYPE USE_LUKS
 else
     echo "[WARN] vars.conf not found in chroot"
 fi
@@ -21,6 +22,12 @@ fi
 # Ensure scripts are executable
 # ----------------------------------
 chmod +x /root/arch-install/04-configure-system/*.sh
+
+# Load UI functions
+for lib in /root/arch-install/lib/*.sh; do
+    source "$lib"
+done
+
 
 # ----------------------------------
 # Run scripts in order
