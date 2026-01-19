@@ -6,9 +6,9 @@ ui_banner "Localization Configuration"
 # -------------------------------------------------
 # Defaults (used only if not set in vars.conf)
 # -------------------------------------------------
-LOCALE_DEFAULT="en_US.UTF-8"
-LANG_DEFAULT="en_US.UTF-8"
-KEYMAP_DEFAULT="us"
+# LOCALE_DEFAULT="en_US.UTF-8"
+# LANG_DEFAULT="en_US.UTF-8"
+# KEYMAP_DEFAULT="us"
 
 # -------------------------------------------------
 # Resolve variables (vars.conf → default → prompt)

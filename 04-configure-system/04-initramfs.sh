@@ -24,6 +24,14 @@ cp "$MKINITCPIO_CONF" "${MKINITCPIO_CONF}.bak"
 # -------------------------------------------------
 MODULES=(atkbd)  # always include keyboard
 
+if [[ -z "${FS_TYPE:-}" ]]; then
+    ui_step "FS_TYPE not set in vars.conf"
+    read -rp "Enter FS_TYPE [default: $FS_TYPE]: " FS_TYPE
+else
+    ui_info "Using FS_TYPE from vars.conf: $FS_TYPE"
+    read -rp "YES YES YES! Enter FS_TYPE [default: $FS_TYPE]: " FS_TYPE
+fi
+
 if [[ "${FS_TYPE:-}" == "btrfs" ]]; then
     MODULES+=(btrfs)
 fi
