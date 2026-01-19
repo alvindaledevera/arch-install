@@ -20,8 +20,6 @@ run_chroot() {
     echo "[INFO] Entering chroot to run system configuration scripts..."
 
     arch-chroot /mnt /usr/bin/env -i \
-        HOME=/root \
-        TERM="$TERM" \
         PATH=/usr/local/sbin:/usr/local/bin:/usr/bin:/usr/sbin:/sbin \
         HOSTNAME="$HOSTNAME" \
         TIMEZONE="$TIMEZONE" \
