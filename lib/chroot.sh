@@ -19,5 +19,16 @@ run_copy_install_script() {
 run_chroot() {
     echo "[INFO] Entering chroot to run system configuration scripts..."
 
-    arch-chroot /mnt /root/arch-install/lib/run_chroot_scripts.sh
+    arch-chroot /mnt /usr/bin/env -i \
+        HOME=/root \
+        TERM="$TERM" \
+        PATH=/usr/local/sbin:/usr/local/bin:/usr/bin:/usr/sbin:/sbin \
+        HOSTNAME="$HOSTNAME" \
+        TIMEZONE="$TIMEZONE" \
+        USE_LUKS="$USE_LUKS" \
+        FS_TYPE="$FS_TYPE" \
+        LOCALE="$LOCALE" \
+        LANG="$LANG" \
+        KEYMAP="$KEYMAP" \
+        /root/arch-install/lib/run_chroot_scripts.sh
 }
