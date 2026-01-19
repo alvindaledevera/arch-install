@@ -14,30 +14,27 @@ if [[ ! -f "$MKINITCPIO_CONF" ]]; then
 fi
 
 # -------------------------------------------------
-# Backup
+# Backup original
 # -------------------------------------------------
 ui_info "Backing up mkinitcpio.conf"
 cp "$MKINITCPIO_CONF" "${MKINITCPIO_CONF}.bak"
+
+# -------------------------------------------------
+# Normalize variables
+# -------------------------------------------------
+FS_TYPE="${FS_TYPE,,}"     # lowercase
+USE_LUKS="${USE_LUKS,,}"   # lowercase
 
 # -------------------------------------------------
 # MODULES
 # -------------------------------------------------
 MODULES=(atkbd)  # always include keyboard
 
-if [[ -z "${FS_TYPE:-}" ]]; then
-    ui_step "FS_TYPE not set in vars.conf"
-    read -rp "Enter FS_TYPE [default: $FS_TYPE]: " FS_TYPE
-else
-    ui_info "Using FS_TYPE from vars.conf: $FS_TYPE"
-    read -rp "YES YES YES! Enter FS_TYPE [default: $FS_TYPE]: " FS_TYPE
-fi
-
-if [[ "${FS_TYPE:-}" == "btrfs" ]]; then
+if [[ "$FS_TYPE" == "btrfs" ]]; then
     MODULES+=(btrfs)
 fi
 
 ui_info "Setting MODULES: ${MODULES[*]}"
-# Trim spaces and update
 sed -i "s/^MODULES=.*/MODULES=(${MODULES[*]})/" "$MKINITCPIO_CONF"
 
 # -------------------------------------------------
@@ -45,13 +42,13 @@ sed -i "s/^MODULES=.*/MODULES=(${MODULES[*]})/" "$MKINITCPIO_CONF"
 # -------------------------------------------------
 HOOKS=(base systemd autodetect keyboard sd-vconsole modconf block)
 
-if [[ "${USE_LUKS:-N}" =~ ^[Yy]$ ]]; then
+# Insert sd-encrypt if LUKS enabled
+if [[ "$USE_LUKS" == "y" || "$USE_LUKS" == "yes" ]]; then
     ui_info "LUKS enabled → adding sd-encrypt hook"
-    # Insert sd-encrypt before filesystems
     HOOKS+=(sd-encrypt)
 fi
 
-# Add final hooks
+# Always add final hooks
 HOOKS+=(filesystems fsck)
 
 ui_info "Setting HOOKS: ${HOOKS[*]}"

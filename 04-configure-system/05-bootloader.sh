@@ -34,7 +34,7 @@ ROOT_FLAGS="rw"
 # Kernel options
 # -------------------------------------------------
 OPTIONS=""
-if [[ "${USE_LUKS:-N}" =~ ^[Yy]$ ]]; then
+if [[ "${USE_LUKS}" =~ ^[Yy]$ ]]; then
     LUKS_UUID="$(blkid -s UUID -o value "$ROOT_PART")"
     OPTIONS+="rd.luks.name=${LUKS_UUID}=cryptroot root=/dev/mapper/cryptroot "
 else
