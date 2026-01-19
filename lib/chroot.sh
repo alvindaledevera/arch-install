@@ -17,7 +17,11 @@ run_copy_install_script() {
 # Run chroot configuration
 # -----------------------------
 run_chroot() {
-    echo "[INFO] Entering chroot to run system configuration scripts..."
-
-    arch-chroot /mnt /root/arch-install/lib/run_chroot_scripts.sh
+    arch-chroot /mnt /bin/bash <<'EOF'
+    ...
+    for script in /root/arch-install/04-configure-system/[0-9][0-9]*.sh; do
+        ui_step "$(basename "$script")"
+        source "$script"
+    done
+EOF
 }
