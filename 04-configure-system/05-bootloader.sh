@@ -10,16 +10,21 @@ if [[ ! -d /sys/firmware/efi ]]; then
     ui_warn "System not booted in UEFI mode, skipping EFI variable changes."
 fi
 
+# -------------------------------------------------
+# Check required variables
+# -------------------------------------------------
 [[ -n "${ROOT_PART:-}" ]] || { ui_error "ROOT_PART not set"; exit 1; }
+FS_TYPE="${FS_TYPE,,}"     # lowercase
+USE_LUKS="${USE_LUKS,,}"   # lowercase
 
 # -------------------------------------------------
-# Install systemd-boot (graceful if in chroot)
+# Install systemd-boot
 # -------------------------------------------------
 ui_info "Installing systemd-boot..."
 bootctl install || ui_warn "bootctl install skipped (probably chroot)"
 
 # -------------------------------------------------
-# Kernel / initramfs
+# Kernel and initramfs images
 # -------------------------------------------------
 KERNEL_IMAGE="/vmlinuz-linux"
 INITRAMFS_IMAGE="/initramfs-linux.img"
@@ -28,21 +33,25 @@ INITRAMFS_IMAGE="/initramfs-linux.img"
 # Root flags
 # -------------------------------------------------
 ROOT_FLAGS="rw"
-[[ "${FS_TYPE:-}" == "btrfs" ]] && ROOT_FLAGS+=" rootflags=subvol=@"
+[[ "$FS_TYPE" == "btrfs" ]] && ROOT_FLAGS+=" rootflags=subvol=@"
 
 # -------------------------------------------------
-# Kernel options
+# Kernel boot options
 # -------------------------------------------------
 OPTIONS=""
-if [[ "${USE_LUKS}" =~ ^[Yy]$ ]]; then
+
+if [[ "$USE_LUKS" == "y" || "$USE_LUKS" == "yes" ]]; then
+    # LUKS enabled
     LUKS_UUID="$(blkid -s UUID -o value "$ROOT_PART")"
     OPTIONS+="rd.luks.name=${LUKS_UUID}=cryptroot root=/dev/mapper/cryptroot "
 else
+    # No encryption
     ROOT_UUID="$(blkid -s UUID -o value "$ROOT_PART")"
     OPTIONS+="root=UUID=${ROOT_UUID} "
 fi
+
 OPTIONS+="$ROOT_FLAGS"
-OPTIONS="$(echo "$OPTIONS" | xargs)"  # trim spaces
+OPTIONS="$(echo "$OPTIONS" | xargs)"  # trim extra spaces
 
 # -------------------------------------------------
 # Write boot entry
@@ -57,7 +66,7 @@ options $OPTIONS
 EOF
 
 # -------------------------------------------------
-# loader.conf
+# Configure loader.conf
 # -------------------------------------------------
 ui_info "Configuring loader.conf"
 cat <<EOF > /boot/loader/loader.conf
@@ -66,4 +75,4 @@ timeout 5
 editor no
 EOF
 
-ui_success "Bootloader configured successfully"
+ui_success "Bootloader configured successfully ✅"
