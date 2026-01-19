@@ -28,5 +28,6 @@ run_chroot() {
         LOCALE="$LOCALE" \
         LANG="$LANG" \
         KEYMAP="$KEYMAP" \
+        ROOT_PART="$ROOT_PART" \
         /root/arch-install/lib/run_chroot_scripts.sh
 }
