@@ -6,42 +6,17 @@ run_copy_install_script() {
     cp -a "$ROOT_DIR" /mnt/root/arch-install
 }
 
-
 run_chroot() {
-    arch-chroot /mnt /bin/bash <<'EOF'
-set -euo pipefail
+    echo "[INFO] Running scripts inside chroot"
+    
+    # Ensure scripts are executable
+    chmod +x /mnt/root/arch-install/04-configure-system/*.sh
 
-# ----------------------------------
-# Load installer variables
-# ----------------------------------
-if [[ -f /root/arch-install/vars.conf ]]; then
-    source /root/arch-install/vars.conf
-else
-    echo "[WARN] vars.conf not found in chroot"
-fi
+    # Run each script interactively inside chroot
+    for script in /mnt/root/arch-install/04-configure-system/[0-9][0-9]*.sh; do
+        echo "[CHROOT] Running $(basename "$script")"
+        arch-chroot /mnt /bin/bash -c "/root/arch-install/04-configure-system/$(basename "$script")"
+    done
 
-# ----------------------------------
-# Load shared libraries (UI, log, etc.)
-# ----------------------------------
-for lib in /root/arch-install/lib/*.sh; do
-    source "$lib"
-done
-
-ui_banner "Running chroot system configuration"
-
-# ----------------------------------
-# Ensure scripts are executable
-# ----------------------------------
-chmod +x /root/arch-install/04-configure-system/*.sh
-
-# ----------------------------------
-# Run scripts in order (IMPORTANT PART)
-# ----------------------------------
-for script in /root/arch-install/04-configure-system/[0-9][0-9]*.sh; do
-    ui_step "$(basename "$script")"
-    source "$script"
-done
-
-ui_success "Chroot configuration complete"
-EOF
+    echo "[INFO] Chroot configuration complete"
 }

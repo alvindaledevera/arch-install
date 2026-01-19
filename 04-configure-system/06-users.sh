@@ -2,6 +2,11 @@
 set -euo pipefail
 
 # -----------------------------
+# Load UI helpers
+# -----------------------------
+source /root/arch-install/lib/ui.sh
+
+# -----------------------------
 # UI banner
 # -----------------------------
 ui_banner "User Setup"
