@@ -33,7 +33,7 @@ BASE_PKGS=(
     nano
     git
     #curl
-   # wget
+    #wget
 
     ## Networking
     #networkmanager
