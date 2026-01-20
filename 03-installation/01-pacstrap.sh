@@ -28,6 +28,7 @@ BASE_PKGS=(
     ## Essentials
     btrfs-progs
     base-devel
+    timeshift
     #sudo
     #vim
     nano
