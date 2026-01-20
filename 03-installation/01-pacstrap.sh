@@ -36,7 +36,7 @@ BASE_PKGS=(
    # wget
 
     ## Networking
-    networkmanager
+    #networkmanager
     #openssh
 )
 
