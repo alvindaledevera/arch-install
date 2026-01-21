@@ -41,10 +41,10 @@ EOF
 # Enable networking services (safe in chroot)
 # -----------------------------
 if type ui_info &>/dev/null; then
-    ui_info "Enabling systemd-networkd and systemd-resolved..."
+    ui_info "Enabling NetworkManager.."
 fi
-systemctl enable systemd-networkd || true
-systemctl enable systemd-resolved || true
+systemctl enable NetworkManager || true
+
 
 # -----------------------------
 # Create symlink for resolv.conf (ignore harmless error)
