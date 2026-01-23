@@ -33,7 +33,7 @@ INITRAMFS_IMAGE="/initramfs-linux.img"
 # Root flags
 # -------------------------------------------------
 ROOT_FLAGS="rw"
-[[ "$FS_TYPE" == "btrfs" ]] && ROOT_FLAGS+=" rootflags=subvol=@"
+[[ "$FS_TYPE" == "btrfs" ]] && ROOT_FLAGS+=" rootflags=subvol=@ loglevel=3"
 
 # -------------------------------------------------
 # Kernel boot options
