@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ui_banner "Updating pacman mirrors (Post-chroot)"
+ui_banner "Updating pacman mirrors"
 
-# Install reflector + Python if missing
+# Install reflector if missing
 if ! command -v reflector &>/dev/null; then
-    pacman -Sy --noconfirm reflector python
+    ui_info "Installing reflector..."
+    pacman -Sy --noconfirm reflector
 fi
 
 # Detect country via IP
@@ -13,36 +14,22 @@ COUNTRY="$(curl -fsSL https://ipapi.co/country || true)"
 COUNTRY="${COUNTRY:-all}"
 ui_info "Detected country: $COUNTRY"
 
-# Fetch top 10 fastest mirrors for detected country
-mapfile -t MIRRORS < <(
-    reflector --country "$COUNTRY" --protocol https --latest 20 --sort rate --save /tmp/mirrorlist.tmp \
-    && awk '{print $1}' /tmp/mirrorlist.tmp
-)
-
-# Fallback to global if no mirrors found
-if [ ${#MIRRORS[@]} -eq 0 ]; then
-    ui_warn "No mirrors found for $COUNTRY, using global mirrors..."
-    mapfile -t MIRRORS < <(
-        reflector --country all --protocol https --latest 20 --sort rate --save /tmp/mirrorlist.tmp \
-        && awk '{print $1}' /tmp/mirrorlist.tmp
-    )
+# Run reflector to generate mirrorlist directly
+ui_info "Generating optimal mirrorlist with reflector..."
+if [[ "$COUNTRY" != "all" ]] && reflector --country "$COUNTRY" --protocol https --latest 20 --sort rate --save /etc/pacman.d/mirrorlist 2>/dev/null; then
+    ui_success "Mirrorlist updated for country: $COUNTRY"
+else
+    ui_warn "Failed to fetch mirrors for $COUNTRY or country set to all, using global HTTPS mirrors..."
+    reflector --protocol https --latest 20 --sort rate --save /etc/pacman.d/mirrorlist
+    ui_success "Global mirrorlist updated"
 fi
 
-# Let user select mirror
-ui_step "Select a mirror to use:"
-PS3="Enter number: "
-select MIRROR in "${MIRRORS[@]}"; do
-    [[ -n "$MIRROR" ]] || { ui_warn "Invalid selection"; continue; }
-    echo "Server = $MIRROR" > /etc/pacman.d/mirrorlist
-    ui_success "Mirrorlist updated to $MIRROR"
-    break
-done
-
-# Enable parallel downloads
-ui_step "Enabling parallel downloads..."
+# Enable parallel downloads in pacman.conf (Arch Wiki standard)
+ui_step "Enabling parallel downloads in pacman.conf..."
 if grep -q '^#ParallelDownloads' /etc/pacman.conf; then
     sed -i 's/^#ParallelDownloads.*/ParallelDownloads = 5/' /etc/pacman.conf
 elif ! grep -q '^ParallelDownloads' /etc/pacman.conf; then
-    echo 'ParallelDownloads = 5' >> /etc/pacman.conf
+    sed -i '/^\[options\]/a ParallelDownloads = 5' /etc/pacman.conf
 fi
-ui_success "Parallel downloads enabled"
+
+ui_success "Parallel downloads enabled (ParallelDownloads = 5)"
