@@ -15,7 +15,7 @@ ui_info "Detected country: $COUNTRY"
 
 # Fetch top 10 fastest mirrors for detected country
 mapfile -t MIRRORS < <(
-    reflector --country "$COUNTRY" --protocol https --latest 10 --sort rate --save /tmp/mirrorlist.tmp \
+    reflector --country "$COUNTRY" --protocol https --latest 20 --sort rate --save /tmp/mirrorlist.tmp \
     && awk '{print $1}' /tmp/mirrorlist.tmp
 )
 
@@ -23,7 +23,7 @@ mapfile -t MIRRORS < <(
 if [ ${#MIRRORS[@]} -eq 0 ]; then
     ui_warn "No mirrors found for $COUNTRY, using global mirrors..."
     mapfile -t MIRRORS < <(
-        reflector --country all --protocol https --latest 10 --sort rate --save /tmp/mirrorlist.tmp \
+        reflector --country all --protocol https --latest 20 --sort rate --save /tmp/mirrorlist.tmp \
         && awk '{print $1}' /tmp/mirrorlist.tmp
     )
 fi

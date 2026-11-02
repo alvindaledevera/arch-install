@@ -68,8 +68,8 @@ Insert a new step in `02-disk-setup/` between LUKS setup (`02-luks.sh`) and file
 ## Todo Checklist
 - [x] Analyze disk setup scripts for LVM integration
 - [x] Design LVM configuration logic and update `vars.conf`
-- [ ] Create `02-disk-setup/02b-lvm.sh`
-- [ ] Update `02-disk-setup/03-filesystem.sh`
-- [ ] Update `02-disk-setup/04-mount.sh`
-- [ ] Update `03-installation/01-pacstrap.sh` to include `lvm2`
-- [ ] Update `04-configure-system/04-initramfs.sh` to add `lvm2` hook
+- [x] Create `02-disk-setup/02b-lvm.sh`
+- [x] Update `02-disk-setup/03-filesystem.sh`
+- [x] Update `02-disk-setup/04-mount.sh`
+- [x] Update `03-installation/01-pacstrap.sh` to include `lvm2`
+- [x] Update `04-configure-system/04-initramfs.sh` to add `lvm2` hook
