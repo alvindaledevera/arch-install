@@ -24,6 +24,7 @@ cp "$MKINITCPIO_CONF" "${MKINITCPIO_CONF}.bak"
 # -------------------------------------------------
 FS_TYPE="${FS_TYPE,,}"     # lowercase
 USE_LUKS="${USE_LUKS,,}"   # lowercase
+USE_LVM="${USE_LVM,,}"     # lowercase
 
 # -------------------------------------------------
 # MODULES
@@ -46,6 +47,12 @@ HOOKS=(base systemd autodetect keyboard sd-vconsole modconf block)
 if [[ "$USE_LUKS" == "y" || "$USE_LUKS" == "yes" ]]; then
     ui_info "LUKS enabled → adding sd-encrypt hook"
     HOOKS+=(sd-encrypt)
+fi
+
+# Insert lvm2 if LVM enabled
+if [[ "$USE_LVM" == "y" || "$USE_LVM" == "yes" ]]; then
+    ui_info "LVM enabled → adding lvm2 hook"
+    HOOKS+=(lvm2)
 fi
 
 # Always add final hooks

@@ -12,10 +12,19 @@ ui_banner "Filesystem Setup"
 # -------------------------------------------------
 # Determine target device
 # -------------------------------------------------
-if [[ "${USE_LUKS:-}" =~ ^[Yy] ]]; then
+if [[ "${USE_LVM:-no}" == "yes" ]]; then
+    VG_NAME="${VG_NAME:-vg0}"
+    LV_NAME="${LV_NAME:-root}"
+    TARGET_DEV="/dev/$VG_NAME/$LV_NAME"
+elif [[ "${USE_LUKS:-no}" =~ ^[Yy] ]]; then
     TARGET_DEV="/dev/mapper/cryptroot"
 else
     TARGET_DEV="$ROOT_PART"
+fi
+
+if [[ ! -b "$TARGET_DEV" ]]; then
+    ui_error "Target root device $TARGET_DEV does not exist"
+    exit 1
 fi
 
 ui_info "Target root device: $TARGET_DEV"
@@ -30,13 +39,18 @@ rm -rf /mnt/* 2>/dev/null || true
 mkdir -p /mnt /mnt/home /mnt/.snapshots /mnt/boot
 
 # -------------------------------------------------
-# Ensure LUKS is open if encryption is enabled
+# Ensure LUKS/LVM are open/active if enabled
 # -------------------------------------------------
-if [[ "${USE_LUKS:-}" =~ ^[Yy] ]]; then
+if [[ "${USE_LUKS:-no}" =~ ^[Yy] ]]; then
     if ! cryptsetup status cryptroot &>/dev/null; then
         ui_info "Opening LUKS container..."
         cryptsetup open "$ROOT_PART" cryptroot
     fi
+fi
+
+if [[ "${USE_LVM:-no}" == "yes" ]]; then
+    ui_info "Activating LVM Volume Group..."
+    vgchange -ay "${VG_NAME:-vg0}" 2>/dev/null || true
 fi
 
 # -------------------------------------------------

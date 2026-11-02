@@ -27,6 +27,7 @@ BASE_PKGS=(
 
     ## Essentials
     btrfs-progs
+    lvm2
     base-devel
     timeshift
     #sudo

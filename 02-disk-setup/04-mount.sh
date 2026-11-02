@@ -3,8 +3,26 @@ set -euo pipefail
 
 ui_banner "Mounting Filesystems"
 
-# Open LUKS if encrypted
-[[ "${USE_LUKS:-}" == "yes" ]] && cryptsetup open "$ROOT_PART" cryptroot 2>/dev/null || true
+# Ensure LUKS is open if encrypted
+if [[ "${USE_LUKS:-no}" == "yes" ]]; then
+    cryptsetup open "$ROOT_PART" cryptroot 2>/dev/null || true
+fi
+
+# Ensure LVM VG is active if LVM enabled
+if [[ "${USE_LVM:-no}" == "yes" ]]; then
+    vgchange -ay "${VG_NAME:-vg0}" 2>/dev/null || true
+fi
+
+# Determine target device if not already set
+if [[ -z "${TARGET_DEV:-}" ]]; then
+    if [[ "${USE_LVM:-no}" == "yes" ]]; then
+        TARGET_DEV="/dev/${VG_NAME:-vg0}/${LV_NAME:-root}"
+    elif [[ "${USE_LUKS:-no}" == "yes" ]]; then
+        TARGET_DEV="/dev/mapper/cryptroot"
+    else
+        TARGET_DEV="$ROOT_PART"
+    fi
+fi
 
 BTRFS_OPTS="rw,noatime,compress=zstd:3,ssd,discard=async,space_cache=v2,commit=120"
 
